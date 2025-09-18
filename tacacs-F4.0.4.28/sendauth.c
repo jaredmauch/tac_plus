@@ -24,12 +24,12 @@
 #include "expire.h"
 #include "md5.h"
 
-static int do_sendauth_fn();
-static void outbound_chap();
+static int do_sendauth_fn(struct authen_data *data);
+static void outbound_chap(struct authen_data *data);
 #ifdef MSCHAP
-static void outbound_mschap();
+static void outbound_mschap(struct authen_data *data);
 #endif /* MSCHAP */
-void outbound_pap();
+void outbound_pap(struct authen_data *data);
 
 int
 sendauth_fn(struct authen_data *data)

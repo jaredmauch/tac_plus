@@ -182,7 +182,7 @@ do_acct_syslog(struct acct_rec *rec)
 	written += strlen(rec->args[i]);
 
 	if (i < (rec->num_args - 1)) {
-	    strncat(cmdbuf, "    ", 4);
+	    strcat(cmdbuf, "    ");
 	    written += 4;
 	}
     }

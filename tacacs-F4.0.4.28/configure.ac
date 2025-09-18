@@ -3,13 +3,12 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl A configure script is provided, in cause you do not have autoconf.
 
-AC_PREREQ(2.69)
+AC_PREREQ([2.72])
 
 dnl VERSION needs to be updated in version.h.in such that 'make dist'
 dnl uses the correct filename for the directory name and tarball and binaries
 dnl get the right version numbers.
-AC_INIT([tacacs], 
- m4_esyscmd_s([sed -n 's/.*version.*"\(.*\)".*/\1/p' version.h.in]))
+AC_INIT([tacacs],[F4.0.4.28-7fb])
 
 AC_CONFIG_AUX_DIR([aconf])
 AC_CONFIG_MACRO_DIR([aconf])
@@ -120,8 +119,7 @@ AM_MAINTAINER_MODE()
 dnl AC_DISABLE_SHARED()
 dnl use libtool, not ranlib
 dnl AC_PROG_RANLIB
-AC_LIBTOOL_DLOPEN()
-AC_PROG_LIBTOOL()
+LT_INIT([dlopen])
 
 ACX_PTHREAD([CC=$PTHREAD_CC; CFLAGS="$CFLAGS $PTHREAD_CFLAGS";
 	    LIBS="$PTHREAD_LIBS $LIBS"
@@ -135,7 +133,7 @@ AC_C_INLINE
 AC_C_STRINGIZE
 
 # compiler compiler specifics
-AM_PROG_LEX
+AM_PROG_LEX([noyywrap])
 dnl XXX sets LEX and LEXLIB == -fl and YYTEXT?
 # see if 'lex' is flex in disguise
 if test "$LEX" != "flex" ; then
@@ -162,8 +160,9 @@ if test "$YACC" != "bison" ; then
 fi
 
 # platform specifics
-AC_WORDS_BIGENDIAN
-AC_LONG_64_BITS
+AC_C_BIGENDIAN
+AC_CHECK_SIZEOF([long int])
+
 
 AC_PROG_INSTALL
 
@@ -243,12 +242,11 @@ AC_ARG_WITH(libwrap,
     WRAPLIBS="-lwrap"
     OLDLIBS="$LIBS"
     LIBS="$WRAPLIBS $LIBS"
-    AC_TRY_LINK([ int allow_severity; int deny_severity; ],
-		[ hosts_access(); ],
-	[AC_DEFINE(LIBWRAP)
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <tcpd.h>
+ int allow_severity; int deny_severity;
+ struct request_info request; ]], [[ hosts_access(&request); ]])],[AC_DEFINE(LIBWRAP)
 	 WRAPLIBS="-lwrap"
-	 AC_DEFINE(HAVE_LIBWRAP) ],
-	[AC_MSG_ERROR(Could not find libwrap.  You must first install tcp_wrappers.) ])
+	 AC_DEFINE(HAVE_LIBWRAP) ],[AC_MSG_ERROR(Could not find libwrap.  You must first install tcp_wrappers.) ])
     LIBS="$OLDLIBS"
     ;;
   *)
@@ -264,10 +262,9 @@ AC_ARG_WITH(libwrap,
     OLDINCS="$INCLUDES"
     LIBS="$WRAPLIBS $LIBS"
     INCLUDES="$WRAPINCS"
-    AC_TRY_LINK([ int allow_severity; int deny_severity; ],
-		[ hosts_access(); ],
-		[],
-		[ AC_MSG_ERROR(Could not find libwrap.  You must first install tcp_wrappers.) ])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <tcpd.h>
+ int allow_severity; int deny_severity;
+ struct request_info request; ]], [[ hosts_access(&request); ]])],[],[ AC_MSG_ERROR(Could not find libwrap.  You must first install tcp_wrappers.) ])
     LIBS="$OLDLIBS"
     INCLUDES="$OLDINCS"
     ;;
@@ -278,12 +275,11 @@ AC_ARG_WITH(libwrap,
   WRAPLIBS="-lwrap"
   OLDLIBS="$LIBS"
   LIBS="$WRAPLIBS $LIBS"
-  AC_TRY_LINK([ int allow_severity; int deny_severity; ],
-	[ hosts_access(); ],
-	[AC_DEFINE(LIBWRAP)
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <tcpd.h>
+ int allow_severity; int deny_severity;
+ struct request_info request; ]], [[ hosts_access(&request); ]])],[AC_DEFINE(LIBWRAP)
 	 WRAPLIBS="-lwrap"
-	 AC_DEFINE(HAVE_LIBWRAP) ],
-	[AC_MSG_ERROR(Could not find libwrap.  You must first install tcp_wrappers.) ])
+	 AC_DEFINE(HAVE_LIBWRAP) ],[AC_MSG_ERROR(Could not find libwrap.  You must first install tcp_wrappers.) ])
   LIBS="$OLDLIBS"
 )
 AC_SUBST(WRAPINCS)
@@ -705,10 +701,7 @@ AC_ARG_WITH(prof,
     OLDLIBS="$LIBS"
     CFLAGS="$PROFLAGS $CFLAGS"
     LIBS="$PROFLIBS $LIBS"
-    AC_TRY_LINK([ ],
-		[ moncontrol(0); ],
-	[AC_DEFINE(PROFILE) ],
-		[ AC_MSG_ERROR(Could not compile with -pg.) ])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[ ]], [[ moncontrol(0); ]])],[AC_DEFINE(PROFILE) ],[ AC_MSG_ERROR(Could not compile with -pg.) ])
     CFLAGS="$OLDCFLAGS"
     LIBS="$OLDLIBS"
     ;;
@@ -728,8 +721,13 @@ AC_CHECK_LIB([pam], [pam_start],
 	 LIBS="-lpam $LIBS"])
 
 # check includes/headers
-AC_HEADER_STDC
-AC_HEADER_TIME
+# Autoupdate added the next two lines to ensure that your configure
+# script's behavior did not change.  They are probably safe to remove.
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
+AC_CHECK_HEADERS_ONCE([sys/time.h])
+
 AC_CHECK_HEADERS(crypt.h ctype.h errno.h fcntl.h malloc.h shadow.h stdlib.h \
 		stdint.h string.h strings.h sys/resource.h sys/socket.h \
 		sys/types.h sys/wait.h sysexits.h syslog.h termios.h unistd.h \
@@ -745,7 +743,8 @@ fi
 dnl AC_TYPE_MODE_T
 dnl AC_TYPE_OFF_T
 dnl AC_TYPE_PID_T
-AC_TYPE_SIGNAL
+AC_DEFINE([RETSIGTYPE],[void],[Define as the return type of signal handlers])
+
 dnl AC_TYPE_SIZE_T
 # Do we have socklen_t definition?
 AC_CHECK_TYPES([socklen_t], [], [], [#if HAVE_SYS_TYPES_H
@@ -771,12 +770,12 @@ AC_FUNC_SETPGRP
 AH_TEMPLATE([UNIONWAIT],
 	    [define this if your waitpid() takes an union wait status pointer])
 AC_MSG_CHECKING([if waitpid takes a union wait])
-AC_TRY_COMPILE([#if HAVE_SYS_WAIT_H
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if HAVE_SYS_WAIT_H
 # include <sys/wait.h>
 #endif
 #if HAVE_WAIT_H
 # include <wait.h>
-#endif], [union wait status;
+#endif]], [[union wait status;
 int pid;
 pid = wait (&status);
 #ifdef WEXITSTATUS
@@ -794,10 +793,8 @@ if (WEXITSTATUS(status) != 0)
 #ifdef HAVE_WAITPID
 	/* Make sure union wait works with waitpid.  */
 	pid = waitpid(-1, &status, 0);
-#endif],
-[AC_MSG_RESULT(yes)
- AC_DEFINE(UNIONWAIT)],
-[AC_MSG_RESULT(no)])
+#endif]])],[AC_MSG_RESULT(yes)
+ AC_DEFINE(UNIONWAIT)],[AC_MSG_RESULT(no)])
 
 # Check for re-arming signal
 AH_TEMPLATE([REARMSIGNAL],
@@ -805,7 +802,7 @@ AH_TEMPLATE([REARMSIGNAL],
 	     more than one SIGUSR1. Some systems need to explicitly re-arm
 	     signals after they've been used once])
 AC_MSG_CHECKING([if signals need to be re-armed])
-AC_TRY_RUN([#include <signal.h>
+AC_RUN_IFELSE([AC_LANG_SOURCE([[#include <signal.h>
 #if HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
@@ -828,12 +825,8 @@ int main()
 	    exit(0);
 	else
 	    exit(114);
-}],
-[AC_MSG_RESULT(no)],
-[AC_MSG_RESULT(yes);AC_DEFINE(REARMSIGNAL)],
-[AC_MSG_WARN([tac_plus may be less efficient when cross-compiled])
- AC_DEFINE(REARMSIGNAL)],
-)
+}]])],[AC_MSG_RESULT(no)],[AC_MSG_RESULT(yes);AC_DEFINE(REARMSIGNAL)],[AC_MSG_WARN([tac_plus may be less efficient when cross-compiled])
+ AC_DEFINE(REARMSIGNAL)])
 
 # Check for need to reap children when the default is to ignore SIGCHLD
 AH_TEMPLATE([REAPCHILD],
@@ -843,7 +836,7 @@ AH_TEMPLATE([REAPSIGIGN],
 	    [define this if your o/s needs children reaped even with an
 	     explicit SIG_IGN])
 AC_MSG_CHECKING([if children need to be reaped])
-AC_TRY_RUN([#include <signal.h>
+AC_RUN_IFELSE([AC_LANG_SOURCE([[#include <signal.h>
 #if HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
@@ -874,13 +867,12 @@ int main()
 	if (pid == -1 && errno == ECHILD)
 		exit(0);
 	exit(114);
-}],
-[AC_MSG_RESULT(no)],
-[AC_MSG_RESULT(yes)
- AC_DEFINE(REAPCHILD)
+}]])],[AC_MSG_RESULT(no)],[AC_MSG_RESULT(yes)
+ AC_DEFINE(REAPCHILD)],[AC_MSG_WARN([tac_plus may be less efficient when cross-compiled])
+ AC_DEFINE(REAPCHILD)])
  # try again with SIG_IGN
  AC_MSG_CHECKING([if children need to be reaped with SIG_IGN])
- AC_TRY_RUN([#include <signal.h>
+ AC_RUN_IFELSE([AC_LANG_SOURCE([#include <signal.h>
 #if HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
@@ -912,12 +904,9 @@ int main()
 	if (pid == -1 && errno == ECHILD)
 		exit(0);
 	exit(114);
-}],
- [AC_MSG_RESULT(no)],
- [AC_MSG_RESULT(yes);AC_DEFINE(REAPSIGIGN)])],
-[AC_MSG_WARN([tac_plus may be less efficient when cross-compiled])
- AC_DEFINE(REAPCHILD)],
-)
+}])],[AC_MSG_RESULT(no)],
+ [AC_MSG_RESULT(yes);AC_DEFINE(REAPSIGIGN)],[AC_MSG_WARN([tac_plus may be less efficient when cross-compiled])
+ AC_DEFINE(REAPCHILD)])
 
 # Find an appropriate tar for use in "dist" targets.  A "best guess"
 # is good enough -- if we can't find GNU tar, we don't really care.
@@ -1012,4 +1001,4 @@ AH_BOTTOM([
 AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_FILES(Makefile version.h pathsl.h tac_plus.8 tac_plus.conf.5)
 
-AC_OUTPUT()
+AC_OUTPUT

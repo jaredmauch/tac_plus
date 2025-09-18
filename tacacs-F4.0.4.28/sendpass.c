@@ -24,7 +24,7 @@
 #include "expire.h"
 
 static int
-do_sendpass_fn();
+do_sendpass_fn(struct authen_data *data);
 
 int
 sendpass_fn(struct authen_data *data)

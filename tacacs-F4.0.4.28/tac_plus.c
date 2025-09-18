@@ -173,7 +173,7 @@ reapchildren()
 	   pid = waitpid(-1, &status, WNOHANG);
 	    if (pid <= 1)
         return;
-      snprintf(msgbuf, MSGBUFSZ, "Clening up session for pid %lu", pid);
+      snprintf(msgbuf, MSGBUFSZ, "Clening up session for pid %d", pid);
       report(LOG_DEBUG, msgbuf);
       procs_for_client = decrement_client_count_for_proc(pid);
       total_child_count--;

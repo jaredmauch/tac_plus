@@ -31,6 +31,8 @@
 # include <shadow.h>
 #endif
 
+#include <time.h>
+
 #if HAVE_PAM
 # ifdef __APPLE__	/* MacOS X */
 #  if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1060

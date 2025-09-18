@@ -105,6 +105,7 @@ char * get_client_ip_from_pid(pid_t process_id)
   if (pc) {
     return pc->client_ip;
   }
+  return NULL;
 }
 
 /* derement the client counter for a given client IP */
@@ -139,12 +140,12 @@ int decrement_client_count_for_proc(pid_t process_id)
   char* client_ip = get_client_ip_from_pid(process_id);
   if (client_ip) {
     proc_count = decrement_client_count(client_ip);
-    snprintf(msgbuf, MSGBUFSZ, "Pid %lu Lowered Count for %s to %d",
+    snprintf(msgbuf, MSGBUFSZ, "Pid %d Lowered Count for %s to %d",
         process_id, client_ip, proc_count);
     report(LOG_ALERT, msgbuf);
     delete_proc_client_map(process_id);
   } else {
-    snprintf(msgbuf, MSGBUFSZ, "Failed to find client ip for pid %lu", process_id);
+    snprintf(msgbuf, MSGBUFSZ, "Failed to find client ip for pid %d", process_id);
     report(LOG_ALERT, msgbuf);
   }
   return proc_count;

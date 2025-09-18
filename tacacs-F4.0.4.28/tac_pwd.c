@@ -137,7 +137,7 @@ do_md5(char *passwd, char *salt)
 int
 main(int argc, char **argv)
 {
-    char		*crypt();
+    char		*crypt(const char *, const char *);
     char		pass[25],
 			*salt = NULL;
     char		*result;

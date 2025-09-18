@@ -113,9 +113,12 @@ typedef struct tac_plus_pak_hdr HDR;
 
 #define AUTHEN_NAME_SIZE 128
 
+/* Forward declaration */
+struct authen_data;
+
 struct authen_type {
     char authen_name[AUTHEN_NAME_SIZE];
-    int (*authen_func)();
+    int (*authen_func)(struct authen_data *data);
     int authen_type;
 };
 
@@ -427,6 +430,9 @@ char	*cfg_get_pap_secret(char *, int);
 char	**cfg_get_svc_attrs(NODE *, int *);
 NODE	*cfg_get_svc_node(char *, int, char *, char *, int);
 int	cfg_get_user_nopasswd(char *, int);
+int	cfg_get_logauthor(void);
+int	cfg_get_maxprocs(void);
+int	cfg_get_maxprocsperclt(void);
 char	*cfg_nodestring(int);
 int	cfg_ppp_is_configured(char *, int);
 int	cfg_read_config(char *);

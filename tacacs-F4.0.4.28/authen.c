@@ -22,9 +22,9 @@
 
 #include "tac_plus.h"
 
-static int choose();
-static void authenticate();
-static void do_start();
+static int choose(struct authen_data *datap, struct authen_type *typep);
+static void authenticate(struct authen_data *datap, struct authen_type *typep);
+static void do_start(u_char *pak);
 
 /*
  *  Come here when we receive an authentication START packet
@@ -309,7 +309,7 @@ authenticate(struct authen_data *datap, struct authen_type *typep)
     int iterations = 0;
     u_char *reply, *p;
     struct authen_cont *cont;
-    int (*func) ();
+    int (*func)(struct authen_data *data);
 
     if (debug & DEBUG_PACKET_FLAG)
 	report(LOG_DEBUG, "Calling authentication function");

@@ -241,9 +241,12 @@ XXX should this be in tacacs.h?
 
 #define AUTHEN_NAME_SIZE 128
 
+/* Forward declaration */
+struct authen_data;
+
 struct authen_type {
     char authen_name[AUTHEN_NAME_SIZE];
-    int (*authen_func)();
+    int (*authen_func)(struct authen_data *data);
     int authen_type;
 };
 

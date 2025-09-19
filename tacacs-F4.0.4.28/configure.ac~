@@ -8,7 +8,7 @@ AC_PREREQ([2.72])
 dnl VERSION needs to be updated in version.h.in such that 'make dist'
 dnl uses the correct filename for the directory name and tarball and binaries
 dnl get the right version numbers.
-AC_INIT([tacacs],[F4.0.4.28-7fb])
+AC_INIT([tacacs],[m4_esyscmd_s(sed -n 's/.*version.*"\(.*\)".*/\1/p' version.h.in)])
 
 AC_CONFIG_AUX_DIR([aconf])
 AC_CONFIG_MACRO_DIR([aconf])
@@ -119,7 +119,14 @@ AM_MAINTAINER_MODE()
 dnl AC_DISABLE_SHARED()
 dnl use libtool, not ranlib
 dnl AC_PROG_RANLIB
-LT_INIT([dlopen])
+_LT_SET_OPTION([LT_INIT],[dlopen])
+m4_warn([obsolete],[_LT_SET_OPTION([LT_INIT],[dlopen])
+m4_warn([obsolete],[AC_LIBTOOL_DLOPEN: Remove this warning and the call to _LT_SET_OPTION when you
+put the 'dlopen' option into LT_INIT's first parameter.])
+: Remove this warning and the call to _LT_SET_OPTION when you
+put the 'dlopen' option into LT_INIT's first parameter.])
+
+LT_INIT([])
 
 ACX_PTHREAD([CC=$PTHREAD_CC; CFLAGS="$CFLAGS $PTHREAD_CFLAGS";
 	    LIBS="$PTHREAD_LIBS $LIBS"
@@ -133,7 +140,7 @@ AC_C_INLINE
 AC_C_STRINGIZE
 
 # compiler compiler specifics
-AM_PROG_LEX([noyywrap])
+AM_PROG_LEX
 dnl XXX sets LEX and LEXLIB == -fl and YYTEXT?
 # see if 'lex' is flex in disguise
 if test "$LEX" != "flex" ; then
@@ -161,7 +168,14 @@ fi
 
 # platform specifics
 AC_C_BIGENDIAN
+m4_warn([obsolete],
+[your code should no longer depend upon 'LONG_64_BITS', but upon
+'SIZEOF_LONG_INT == 8'.  Remove this warning and the 'AC_DEFINE' when
+you adjust the code.])dnl
 AC_CHECK_SIZEOF([long int])
+test $ac_cv_sizeof_long_int = 8 &&
+  AC_DEFINE([LONG_64_BITS],[1],[Define to 1 if 'sizeof (long int)' = 8.  Obsolete, use
+	     'SIZEOF_LONG_INT'.])
 
 
 AC_PROG_INSTALL
@@ -299,7 +313,6 @@ AC_ARG_WITH(skey,
   yes)
     AC_MSG_RESULT(yes)
     AC_DEFINE(SKEY)
-    AC_CHECK_HEADERS([skey.h])
     AC_SEARCH_LIBS([skeychallenge], [skey],
 	[ ],
 	[AC_MSG_ERROR(Could not find libskey.  You must first install skey or provide a hint to the location of library and includes, as in --with-skey=/usr/local.)])
@@ -307,7 +320,6 @@ AC_ARG_WITH(skey,
   *)
     AC_MSG_RESULT(yes)
     AC_DEFINE(SKEY)
-    AC_CHECK_HEADERS([skey.h])
     if test -d "$withval" ; then
 	LDFAGS="$LDFLAGS -L$withval/lib"
 	CFLAGS="$CFLAGS -I$withval/include"
@@ -343,7 +355,6 @@ AC_ARG_WITH(aceclnt,
   yes)
     AC_MSG_RESULT(yes)
     AC_DEFINE(ACECLNT)
-    AC_CHECK_HEADERS([acexport.h])
     AC_SEARCH_LIBS([SD_Init], [aceclnt],
 	[ ],
 	[AC_MSG_ERROR(Could not find libaceclnt.  You must first install aceclnt or provide a hint to the location of library and includes, as in --with-aceclnt=/usr/local)])
@@ -351,7 +362,6 @@ AC_ARG_WITH(aceclnt,
   *)
     AC_MSG_RESULT(yes)
     AC_DEFINE(ACECLNT)
-    AC_CHECK_HEADERS([acexport.h])
     if test -d "$withval" ; then
 	LDFAGS="$LDFLAGS -L$withval/lib"
 	CFLAGS="$CFLAGS -I$withval/include"
@@ -605,48 +615,6 @@ AC_ARG_ENABLE(mschapdes,
 AC_SUBST(MSCHAP_DES)
 
 dnl
-dnl SENDPASS - enable/disable SENDPASS support (disabled by default for security)
-dnl
-AC_MSG_CHECKING(whether to enable SENDPASS support)
-AH_TEMPLATE(ENABLE_SENDPASS, [define this to enable SENDPASS support (disabled by default for security)])
-AC_ARG_ENABLE(sendpass,
-    AS_HELP_STRING([--enable-sendpass],[enable SENDPASS support (disabled by default for security)]),
-[ case "$enable_sendpass" in
-  yes)
-    AC_MSG_RESULT(yes)
-    AC_DEFINE(ENABLE_SENDPASS)
-    ;;
-  no | *)
-    AC_MSG_RESULT(no)
-    ;;
-  esac ],
-  # ie: no --{enable,disable}-sendpass option, withval == ""
-  AC_MSG_RESULT(no)
-)
-AC_SUBST(ENABLE_SENDPASS)
-
-dnl
-dnl DEBUG_SECRET_LOGGING - enable debug-only secret logging
-dnl
-AC_MSG_CHECKING(whether to enable debug secret logging)
-AH_TEMPLATE(DEBUG_SECRET_LOGGING, [define this to enable debug-only secret logging])
-AC_ARG_ENABLE(debug-secrets,
-    AS_HELP_STRING([--enable-debug-secrets],[enable debug-only secret logging (for debugging only)]),
-[ case "$enable_debug_secrets" in
-  yes)
-    AC_MSG_RESULT(yes)
-    AC_DEFINE(DEBUG_SECRET_LOGGING)
-    ;;
-  no | *)
-    AC_MSG_RESULT(no)
-    ;;
-  esac ],
-  # ie: no --{enable,disable}-debug-secrets option, withval == ""
-  AC_MSG_RESULT(no)
-)
-AC_SUBST(DEBUG_SECRET_LOGGING)
-
-dnl
 dnl pid file location
 dnl
 AC_MSG_CHECKING(for alt pid file FQPN)
@@ -766,52 +734,34 @@ AC_CHECK_LIB([pam], [pam_start],
 	[AC_DEFINE(HAVE_PAM)
 	 LIBS="-lpam $LIBS"])
 
-# look for libsodium for Argon2 and modern crypto
-AH_TEMPLATE(HAVE_LIBSODIUM, [define if your system has libsodium])
-PKG_CHECK_MODULES([LIBSODIUM], [libsodium], 
-	[AC_DEFINE(HAVE_LIBSODIUM)
-	 LIBS="$LIBSODIUM_LIBS $LIBS"
-	 CPPFLAGS="$LIBSODIUM_CFLAGS $CPPFLAGS"],
-	[AC_MSG_WARN([libsodium not found via pkg-config. Trying manual detection...])
-	 AC_CHECK_HEADER([sodium.h], 
-		[AC_CHECK_LIB([sodium], [crypto_pwhash_argon2id_str],
-			[AC_DEFINE(HAVE_LIBSODIUM)
-			 LIBS="-lsodium $LIBS"
-			 LIBSODIUM_LIBS="-lsodium"],
-			[AC_MSG_WARN([libsodium library not found. Argon2 password hashing will be disabled.])])],
-		[AC_MSG_WARN([libsodium headers not found. Argon2 password hashing will be disabled.])])])
-
-# Check for bcrypt support in system crypt() function
-AH_TEMPLATE(HAVE_BCRYPT, [define if your system crypt() supports bcrypt])
-AC_MSG_CHECKING([for bcrypt support in system crypt()])
-# Since we know bcrypt is supported by the system crypt() function,
-# we'll define it directly. The test program confirmed it works.
-AC_DEFINE(HAVE_BCRYPT)
-AC_MSG_RESULT([yes])
-
-# Check for system crypt() function with modern algorithms
-AC_CHECK_FUNCS([crypt])
-if test "$ac_cv_func_crypt" = yes; then
-    AC_DEFINE(HAVE_CRYPT)
-fi
-
-# OpenSSL removed - using libsodium and system crypt() instead
-
-# OpenSSL removed - using libsodium and system crypt() instead
-
 # check includes/headers
+m4_warn([obsolete],
+[The preprocessor macro 'STDC_HEADERS' is obsolete.
+  Except in unusual embedded environments, you can safely include all
+  C89 headers unconditionally.])dnl
 # Autoupdate added the next two lines to ensure that your configure
 # script's behavior did not change.  They are probably safe to remove.
 AC_CHECK_INCLUDES_DEFAULT
 AC_PROG_EGREP
 
+m4_warn([obsolete],
+[Update your code to rely only on HAVE_SYS_TIME_H,
+then remove this warning and the obsolete code below it.
+All current systems provide time.h; it need not be checked for.
+Not all systems provide sys/time.h, but those that do, all allow
+you to include it and time.h simultaneously.])dnl
 AC_CHECK_HEADERS_ONCE([sys/time.h])
+# Obsolete code to be removed.
+if test $ac_cv_header_sys_time_h = yes; then
+  AC_DEFINE([TIME_WITH_SYS_TIME],[1],[Define to 1 if you can safely include both <sys/time.h>
+	     and <time.h>.  This macro is obsolete.])
+fi
+# End of obsolete code.
 
 AC_CHECK_HEADERS(crypt.h ctype.h errno.h fcntl.h malloc.h shadow.h stdlib.h \
 		stdint.h string.h strings.h sys/resource.h sys/socket.h \
 		sys/types.h sys/wait.h sysexits.h syslog.h termios.h unistd.h \
-		utmp.h utmpx.h wait.h sodium.h grp.h poll.h pwd.h netinet/tcp.h \
-		sys/ioctl.h sys/file.h regex.h varargs.h skey.h acexport.h)
+		utmp.h utmpx.h wait.h)
 
 AH_TEMPLATE([SHADOW_PASSWORDS],
 	    [define if your system has a shadow password file])
@@ -823,7 +773,18 @@ fi
 dnl AC_TYPE_MODE_T
 dnl AC_TYPE_OFF_T
 dnl AC_TYPE_PID_T
-AC_DEFINE([RETSIGTYPE],[void],[Define as the return type of signal handlers])
+m4_warn([obsolete],
+[your code may safely assume C89 semantics that RETSIGTYPE is void.
+Remove this warning and the 'AC_CACHE_CHECK' when you adjust the code.])dnl
+AC_CACHE_CHECK([return type of signal handlers],[ac_cv_type_signal],[AC_COMPILE_IFELSE(
+[AC_LANG_PROGRAM([#include <sys/types.h>
+#include <signal.h>
+],
+		 [return *(signal (0, 0)) (0) == 1;])],
+		   [ac_cv_type_signal=int],
+		   [ac_cv_type_signal=void])])
+AC_DEFINE_UNQUOTED([RETSIGTYPE],[$ac_cv_type_signal],[Define as the return type of signal handlers
+		    ('int' or 'void').])
 
 dnl AC_TYPE_SIZE_T
 # Do we have socklen_t definition?
@@ -1076,7 +1037,6 @@ AH_BOTTOM([
 #if BSDI
 # define NO_PWAGE
 #endif
-#endif /* CONFIG_H */
 ])
 AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_FILES(Makefile version.h pathsl.h tac_plus.8 tac_plus.conf.5)

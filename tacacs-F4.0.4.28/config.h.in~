@@ -24,13 +24,6 @@
 /* define this to include debugging support */
 #undef DBG
 
-/* define this to enable debug-only secret logging */
-#undef DEBUG_SECRET_LOGGING
-
-/* define this to enable SENDPASS support (disabled by default for security)
-   */
-#undef ENABLE_SENDPASS
-
 /* define this if your o/s is FreeBSD */
 #undef FREEBSD
 

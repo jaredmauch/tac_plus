@@ -33,6 +33,13 @@ sendpass_fn(struct authen_data *data)
     char *name = data->NAS_id->username;
     char *port = data->NAS_id->NAS_port;
 
+#ifndef ENABLE_SENDPASS
+    /* SENDPASS is disabled by default for security (RFC 8907 compliance) */
+    report(LOG_ERR, "%s: %s %s sendpass request rejected - SENDPASS disabled for security",
+	   session.peer, session.port, name ? name : "<unknown>");
+    data->status = TAC_PLUS_AUTHEN_STATUS_FAIL;
+    return(0);
+#else
     if (sendauth_only) {
 	/* sendpass is disallowed */
 	report(LOG_ERR, "%s: %s %s sendpass request rejected",
@@ -57,6 +64,7 @@ sendpass_fn(struct authen_data *data)
 	       "accepted" : "rejected");
 
     return(status);
+#endif /* ENABLE_SENDPASS */
 }
 
 /*
@@ -157,8 +165,10 @@ do_sendpass_fn(struct authen_data *data)
 	    /* Should never happen */
 	    data->status = TAC_PLUS_AUTHEN_STATUS_ERROR;
 	    data->server_msg = tac_strdup("Illegal secret format");
+#ifdef DEBUG_SECRET_LOGGING
 	    report(LOG_ERR, "%s: Illegal secret format %s",
 		   session.peer, secret);
+#endif
 	    return(0);
 	}
 

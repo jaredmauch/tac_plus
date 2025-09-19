@@ -667,8 +667,6 @@ TACPLUS_WHOLOGFILE
 TACPLUS_LOGFILE
 TACPLUS_ACCTFILE
 TACPLUS_PIDFILE
-DEBUG_SECRET_LOGGING
-ENABLE_SENDPASS
 MSCHAP_DES
 MSCHAP_
 ARAP_DES
@@ -851,8 +849,6 @@ enable_finger
 enable_arapdes
 enable_mschap
 enable_mschapdes
-enable_sendpass
-enable_debug_secrets
 with_pidfile
 with_acctfile
 with_logfile
@@ -1531,10 +1527,6 @@ Optional Features:
   --enable-arapdes        enable DES for ARAP
   --enable-mschap         enable MSCHAP
   --enable-mschapdes      enable DES for MSCHAP
-  --enable-sendpass       enable SENDPASS support (disabled by default for
-                          security)
-  --enable-debug-secrets  enable debug-only secret logging (for debugging
-                          only)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -17474,62 +17466,6 @@ printf "%s\n" "no" >&6; }
   esac
 else case e in #(
   e) # ie: no --{enable,disable}-mschapdes option, withval == ""
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
-printf "%s\n" "no" >&6; }
- ;;
-esac
-fi
-
-
-
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether to enable SENDPASS support" >&5
-printf %s "checking whether to enable SENDPASS support... " >&6; }
-
-# Check whether --enable-sendpass was given.
-if test ${enable_sendpass+y}
-then :
-  enableval=$enable_sendpass;  case "$enable_sendpass" in
-  yes)
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-printf "%s\n" "yes" >&6; }
-    printf "%s\n" "#define ENABLE_SENDPASS 1" >>confdefs.h
-
-    ;;
-  no | *)
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
-printf "%s\n" "no" >&6; }
-    ;;
-  esac
-else case e in #(
-  e) # ie: no --{enable,disable}-sendpass option, withval == ""
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
-printf "%s\n" "no" >&6; }
- ;;
-esac
-fi
-
-
-
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether to enable debug secret logging" >&5
-printf %s "checking whether to enable debug secret logging... " >&6; }
-
-# Check whether --enable-debug-secrets was given.
-if test ${enable_debug_secrets+y}
-then :
-  enableval=$enable_debug_secrets;  case "$enable_debug_secrets" in
-  yes)
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-printf "%s\n" "yes" >&6; }
-    printf "%s\n" "#define DEBUG_SECRET_LOGGING 1" >>confdefs.h
-
-    ;;
-  no | *)
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
-printf "%s\n" "no" >&6; }
-    ;;
-  esac
-else case e in #(
-  e) # ie: no --{enable,disable}-debug-secrets option, withval == ""
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
 printf "%s\n" "no" >&6; }
  ;;

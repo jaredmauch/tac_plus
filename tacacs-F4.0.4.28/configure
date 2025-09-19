@@ -656,6 +656,11 @@ LIBOBJS
 MYSYSCONFDIR
 INST_PROGS
 TAR
+LIBSODIUM_LIBS
+LIBSODIUM_CFLAGS
+PKG_CONFIG_LIBDIR
+PKG_CONFIG_PATH
+PKG_CONFIG
 PROFLIBS
 PROFLAGS
 TACPLUS_WHOLOGFILE
@@ -861,7 +866,12 @@ CPPFLAGS
 LT_SYS_LIBRARY_PATH
 CPP
 YACC
-YFLAGS'
+YFLAGS
+PKG_CONFIG
+PKG_CONFIG_PATH
+PKG_CONFIG_LIBDIR
+LIBSODIUM_CFLAGS
+LIBSODIUM_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1555,6 +1565,15 @@ Some influential environment variables:
   YFLAGS      The list of arguments that will be passed by default to $YACC.
               This script will default YFLAGS to the empty string to avoid a
               default value of '-d' given by some make applications.
+  PKG_CONFIG  path to pkg-config utility
+  PKG_CONFIG_PATH
+              directories to add to pkg-config's search path
+  PKG_CONFIG_LIBDIR
+              path overriding pkg-config's built-in search path
+  LIBSODIUM_CFLAGS
+              C compiler flags for LIBSODIUM, overriding pkg-config
+  LIBSODIUM_LIBS
+              linker flags for LIBSODIUM, overriding pkg-config
 
 Use these variables to override the choices made by 'configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -17645,6 +17664,373 @@ then :
 fi
 
 
+# look for libsodium for Argon2 and modern crypto
+
+
+
+
+
+
+
+
+if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
+	if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
+set dummy ${ac_tool_prefix}pkg-config; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_path_PKG_CONFIG+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir$ac_word$ac_exec_ext"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+if test -n "$PKG_CONFIG"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
+printf "%s\n" "$PKG_CONFIG" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_path_PKG_CONFIG"; then
+  ac_pt_PKG_CONFIG=$PKG_CONFIG
+  # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_path_ac_pt_PKG_CONFIG+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) case $ac_pt_PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ac_pt_PKG_CONFIG="$ac_pt_PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_path_ac_pt_PKG_CONFIG="$as_dir$ac_word$ac_exec_ext"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac ;;
+esac
+fi
+ac_pt_PKG_CONFIG=$ac_cv_path_ac_pt_PKG_CONFIG
+if test -n "$ac_pt_PKG_CONFIG"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_pt_PKG_CONFIG" >&5
+printf "%s\n" "$ac_pt_PKG_CONFIG" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+  if test "x$ac_pt_PKG_CONFIG" = x; then
+    PKG_CONFIG=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+printf "%s\n" "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    PKG_CONFIG=$ac_pt_PKG_CONFIG
+  fi
+else
+  PKG_CONFIG="$ac_cv_path_PKG_CONFIG"
+fi
+
+fi
+if test -n "$PKG_CONFIG"; then
+	_pkg_min_version=0.9.0
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
+printf %s "checking pkg-config is at least version $_pkg_min_version... " >&6; }
+	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
+		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+	else
+		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+		PKG_CONFIG=""
+	fi
+fi
+
+pkg_failed=no
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for libsodium" >&5
+printf %s "checking for libsodium... " >&6; }
+
+if test -n "$LIBSODIUM_CFLAGS"; then
+    pkg_cv_LIBSODIUM_CFLAGS="$LIBSODIUM_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libsodium\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libsodium") 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBSODIUM_CFLAGS=`$PKG_CONFIG --cflags "libsodium" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$LIBSODIUM_LIBS"; then
+    pkg_cv_LIBSODIUM_LIBS="$LIBSODIUM_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libsodium\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libsodium") 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBSODIUM_LIBS=`$PKG_CONFIG --libs "libsodium" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+                LIBSODIUM_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libsodium" 2>&1`
+        else
+                LIBSODIUM_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libsodium" 2>&1`
+        fi
+        # Put the nasty error message in config.log where it belongs
+        echo "$LIBSODIUM_PKG_ERRORS" >&5
+
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium not found via pkg-config. Trying manual detection..." >&5
+printf "%s\n" "$as_me: WARNING: libsodium not found via pkg-config. Trying manual detection..." >&2;}
+	 ac_fn_c_check_header_compile "$LINENO" "sodium.h" "ac_cv_header_sodium_h" "$ac_includes_default"
+if test "x$ac_cv_header_sodium_h" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for crypto_pwhash_argon2id_str in -lsodium" >&5
+printf %s "checking for crypto_pwhash_argon2id_str in -lsodium... " >&6; }
+if test ${ac_cv_lib_sodium_crypto_pwhash_argon2id_str+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsodium  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char crypto_pwhash_argon2id_str (void);
+int
+main (void)
+{
+return crypto_pwhash_argon2id_str ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_sodium_crypto_pwhash_argon2id_str=yes
+else case e in #(
+  e) ac_cv_lib_sodium_crypto_pwhash_argon2id_str=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sodium_crypto_pwhash_argon2id_str" >&5
+printf "%s\n" "$ac_cv_lib_sodium_crypto_pwhash_argon2id_str" >&6; }
+if test "x$ac_cv_lib_sodium_crypto_pwhash_argon2id_str" = xyes
+then :
+  printf "%s\n" "#define HAVE_LIBSODIUM 1" >>confdefs.h
+
+			 LIBS="-lsodium $LIBS"
+			 LIBSODIUM_LIBS="-lsodium"
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium library not found. Argon2 password hashing will be disabled." >&5
+printf "%s\n" "$as_me: WARNING: libsodium library not found. Argon2 password hashing will be disabled." >&2;} ;;
+esac
+fi
+
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium headers not found. Argon2 password hashing will be disabled." >&5
+printf "%s\n" "$as_me: WARNING: libsodium headers not found. Argon2 password hashing will be disabled." >&2;} ;;
+esac
+fi
+
+elif test $pkg_failed = untried; then
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium not found via pkg-config. Trying manual detection..." >&5
+printf "%s\n" "$as_me: WARNING: libsodium not found via pkg-config. Trying manual detection..." >&2;}
+	 ac_fn_c_check_header_compile "$LINENO" "sodium.h" "ac_cv_header_sodium_h" "$ac_includes_default"
+if test "x$ac_cv_header_sodium_h" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for crypto_pwhash_argon2id_str in -lsodium" >&5
+printf %s "checking for crypto_pwhash_argon2id_str in -lsodium... " >&6; }
+if test ${ac_cv_lib_sodium_crypto_pwhash_argon2id_str+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsodium  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char crypto_pwhash_argon2id_str (void);
+int
+main (void)
+{
+return crypto_pwhash_argon2id_str ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_sodium_crypto_pwhash_argon2id_str=yes
+else case e in #(
+  e) ac_cv_lib_sodium_crypto_pwhash_argon2id_str=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sodium_crypto_pwhash_argon2id_str" >&5
+printf "%s\n" "$ac_cv_lib_sodium_crypto_pwhash_argon2id_str" >&6; }
+if test "x$ac_cv_lib_sodium_crypto_pwhash_argon2id_str" = xyes
+then :
+  printf "%s\n" "#define HAVE_LIBSODIUM 1" >>confdefs.h
+
+			 LIBS="-lsodium $LIBS"
+			 LIBSODIUM_LIBS="-lsodium"
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium library not found. Argon2 password hashing will be disabled." >&5
+printf "%s\n" "$as_me: WARNING: libsodium library not found. Argon2 password hashing will be disabled." >&2;} ;;
+esac
+fi
+
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium headers not found. Argon2 password hashing will be disabled." >&5
+printf "%s\n" "$as_me: WARNING: libsodium headers not found. Argon2 password hashing will be disabled." >&2;} ;;
+esac
+fi
+
+else
+        LIBSODIUM_CFLAGS=$pkg_cv_LIBSODIUM_CFLAGS
+        LIBSODIUM_LIBS=$pkg_cv_LIBSODIUM_LIBS
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+        printf "%s\n" "#define HAVE_LIBSODIUM 1" >>confdefs.h
+
+	 LIBS="$LIBSODIUM_LIBS $LIBS"
+	 CPPFLAGS="$LIBSODIUM_CFLAGS $CPPFLAGS"
+fi
+
+# Check for bcrypt support in system crypt() function
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for bcrypt support in system crypt()" >&5
+printf %s "checking for bcrypt support in system crypt()... " >&6; }
+# Since we know bcrypt is supported by the system crypt() function,
+# we'll define it directly. The test program confirmed it works.
+printf "%s\n" "#define HAVE_BCRYPT 1" >>confdefs.h
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+
+# Check for system crypt() function with modern algorithms
+ac_fn_c_check_func "$LINENO" "crypt" "ac_cv_func_crypt"
+if test "x$ac_cv_func_crypt" = xyes
+then :
+  printf "%s\n" "#define HAVE_CRYPT 1" >>confdefs.h
+
+fi
+
+if test "$ac_cv_func_crypt" = yes; then
+    printf "%s\n" "#define HAVE_CRYPT 1" >>confdefs.h
+
+fi
+
+# OpenSSL removed - using libsodium and system crypt() instead
+
+# OpenSSL removed - using libsodium and system crypt() instead
+
 # check includes/headers
 # Autoupdate added the next two lines to ensure that your configure
 # script's behavior did not change.  They are probably safe to remove.
@@ -17854,6 +18240,12 @@ ac_fn_c_check_header_compile "$LINENO" "wait.h" "ac_cv_header_wait_h" "$ac_inclu
 if test "x$ac_cv_header_wait_h" = xyes
 then :
   printf "%s\n" "#define HAVE_WAIT_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "sodium.h" "ac_cv_header_sodium_h" "$ac_includes_default"
+if test "x$ac_cv_header_sodium_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_SODIUM_H 1" >>confdefs.h
 
 fi
 

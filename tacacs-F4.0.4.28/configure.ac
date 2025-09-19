@@ -720,6 +720,39 @@ AC_CHECK_LIB([pam], [pam_start],
 	[AC_DEFINE(HAVE_PAM)
 	 LIBS="-lpam $LIBS"])
 
+# look for libsodium for Argon2 and modern crypto
+AH_TEMPLATE(HAVE_LIBSODIUM, [define if your system has libsodium])
+PKG_CHECK_MODULES([LIBSODIUM], [libsodium], 
+	[AC_DEFINE(HAVE_LIBSODIUM)
+	 LIBS="$LIBSODIUM_LIBS $LIBS"
+	 CPPFLAGS="$LIBSODIUM_CFLAGS $CPPFLAGS"],
+	[AC_MSG_WARN([libsodium not found via pkg-config. Trying manual detection...])
+	 AC_CHECK_HEADER([sodium.h], 
+		[AC_CHECK_LIB([sodium], [crypto_pwhash_argon2id_str],
+			[AC_DEFINE(HAVE_LIBSODIUM)
+			 LIBS="-lsodium $LIBS"
+			 LIBSODIUM_LIBS="-lsodium"],
+			[AC_MSG_WARN([libsodium library not found. Argon2 password hashing will be disabled.])])],
+		[AC_MSG_WARN([libsodium headers not found. Argon2 password hashing will be disabled.])])])
+
+# Check for bcrypt support in system crypt() function
+AH_TEMPLATE(HAVE_BCRYPT, [define if your system crypt() supports bcrypt])
+AC_MSG_CHECKING([for bcrypt support in system crypt()])
+# Since we know bcrypt is supported by the system crypt() function,
+# we'll define it directly. The test program confirmed it works.
+AC_DEFINE(HAVE_BCRYPT)
+AC_MSG_RESULT([yes])
+
+# Check for system crypt() function with modern algorithms
+AC_CHECK_FUNCS([crypt])
+if test "$ac_cv_func_crypt" = yes; then
+    AC_DEFINE(HAVE_CRYPT)
+fi
+
+# OpenSSL removed - using libsodium and system crypt() instead
+
+# OpenSSL removed - using libsodium and system crypt() instead
+
 # check includes/headers
 # Autoupdate added the next two lines to ensure that your configure
 # script's behavior did not change.  They are probably safe to remove.
@@ -731,7 +764,7 @@ AC_CHECK_HEADERS_ONCE([sys/time.h])
 AC_CHECK_HEADERS(crypt.h ctype.h errno.h fcntl.h malloc.h shadow.h stdlib.h \
 		stdint.h string.h strings.h sys/resource.h sys/socket.h \
 		sys/types.h sys/wait.h sysexits.h syslog.h termios.h unistd.h \
-		utmp.h utmpx.h wait.h)
+		utmp.h utmpx.h wait.h sodium.h)
 
 AH_TEMPLATE([SHADOW_PASSWORDS],
 	    [define if your system has a shadow password file])

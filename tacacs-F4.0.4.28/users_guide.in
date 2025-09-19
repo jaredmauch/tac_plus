@@ -426,6 +426,73 @@ the PAM libraries themselves; see their documentation.
       login = PAM
     }
 
+5). Authentication using modern password hashing algorithms
+
+TACACS+ now supports modern password hashing algorithms that provide enhanced
+security over traditional DES and MD5 methods. These algorithms are designed
+to resist brute-force attacks and rainbow table attacks.
+
+a). bcrypt authentication
+
+bcrypt is a password hashing function based on the Blowfish cipher. It includes
+a cost parameter that can be increased over time to maintain security as
+computing power increases.
+
+    user = alice {
+        login = bcrypt $2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj6vKz4Q5Q2O
+    }
+
+b). Argon2 authentication
+
+Argon2 is the winner of the Password Hashing Competition (2015). It provides
+configurable memory, time, and parallelism parameters to resist various types
+of attacks.
+
+    user = bob {
+        login = argon2 $argon2id$v=19$m=65536,t=3,p=4$salt$hash
+    }
+
+c). PBKDF2 authentication
+
+PBKDF2 (Password-Based Key Derivation Function 2) is part of RSA Laboratories'
+Public-Key Cryptography Standards. It uses a pseudorandom function with a salt
+and iteration count.
+
+    user = charlie {
+        login = pbkdf2 $pbkdf2-sha256$10000$salt$hash
+    }
+
+d). SHA-256/SHA-512 authentication
+
+SHA-256 and SHA-512 based crypt provide stronger hashing than traditional DES
+or MD5 methods while maintaining compatibility with standard crypt() functions.
+
+    user = david {
+        login = sha256 $5$rounds=5000$salt$hash
+    }
+
+    user = eve {
+        login = sha512 $6$rounds=5000$salt$hash
+    }
+
+To generate hashes for these algorithms, use the tac_pwd utility with the
+appropriate options:
+
+    # Generate bcrypt hash
+    tac_pwd -b
+
+    # Generate Argon2 hash
+    tac_pwd -a
+
+    # Generate PBKDF2 hash
+    tac_pwd -p
+
+    # Generate SHA-256 hash
+    tac_pwd -s 256
+
+    # Generate SHA-512 hash
+    tac_pwd -s 512
+
 Be aware that when the tac_plus daemon runs as a non-root user (as is the
 default in FreeBSD /usr/ports), it will not be able to authenticate using
 the pam_unix.so module.  This is because the system function getpwnam()

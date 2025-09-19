@@ -10,10 +10,12 @@ ACLOCAL_AMFLAGS=-I aconf
 
 bin_PROGRAMS = tac_pwd
 sbin_PROGRAMS = tac_plus
-tac_pwd_SOURCES = tac_pwd.c
+tac_pwd_SOURCES = tac_pwd.c modern_crypto.c
+tac_pwd_CFLAGS = -DTAC_PWD_ONLY
+tac_pwd_LDADD = @LIBSODIUM_LIBS@ -lcrypt
 tac_plus_SOURCES = acct.c authen.c author.c choose_authen.c client_count.c \
   config.c default_fn.c default_v0_fn.c do_acct.c do_author.c dump.c enable.c \
-	encrypt.c expire.c hash.c maxsessint.c parse.c programs.c pw.c pwlib.c \
+	encrypt.c expire.c hash.c maxsessint.c modern_crypto.c parse.c programs.c pw.c pwlib.c \
 	report.c sendauth.c sendpass.c tac_plus.c utils.c
 if TACSKEY
 tac_plus_SOURCES += skey_fn.c
@@ -22,7 +24,7 @@ if TACACECLNT
 tac_plus_SOURCES += aceclnt_fn.c
 endif
 tac_plus_LDFLAGS = -L$(top_srcdir)
-tac_plus_LDADD = $(WRAPLIBS) libtacacs.la
+tac_plus_LDADD = $(WRAPLIBS) libtacacs.la @LIBSODIUM_LIBS@ -lcrypt
 
 lib_LTLIBRARIES = libtacacs.la
 libtacacs_la_SOURCES = fdes.c maxsess.c md4.c md5.c packet.c

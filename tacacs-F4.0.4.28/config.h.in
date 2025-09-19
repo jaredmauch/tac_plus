@@ -27,6 +27,12 @@
 /* define this if your o/s is FreeBSD */
 #undef FREEBSD
 
+/* define if your system crypt() supports bcrypt */
+#undef HAVE_BCRYPT
+
+/* Define to 1 if you have the 'crypt' function. */
+#undef HAVE_CRYPT
+
 /* Define to 1 if you have the <crypt.h> header file. */
 #undef HAVE_CRYPT_H
 
@@ -47,6 +53,9 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* define if your system has libsodium */
+#undef HAVE_LIBSODIUM
 
 /* */
 #undef HAVE_LIBWRAP
@@ -77,6 +86,9 @@
 
 /* Define to 1 if the system has the type 'socklen_t'. */
 #undef HAVE_SOCKLEN_T
+
+/* Define to 1 if you have the <sodium.h> header file. */
+#undef HAVE_SODIUM_H
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H

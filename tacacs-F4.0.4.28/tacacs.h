@@ -25,6 +25,29 @@
 #ifndef TACACS_H
 #define TACACS_H	1
 
+#include "config.h"
+
+/* Include POSIX headers for standard types */
+#include <sys/types.h>
+#include <stdint.h>
+
+/* Define POSIX-compliant type aliases for BSD compatibility */
+#ifndef u_char
+typedef unsigned char u_char;
+#endif
+#ifndef u_short
+typedef unsigned short u_short;
+#endif
+
+/* Include modern cryptographic headers if available */
+#ifdef HAVE_LIBSODIUM
+# include <sodium.h>
+#endif
+
+#ifdef HAVE_BCRYPT
+/* Using system crypt() for bcrypt - no separate header needed */
+#endif
+
 #ifndef TAC_PLUS_PORT
 #define	TAC_PLUS_PORT			49
 #define	TAC_PLUS_PORTSTR		"49"
@@ -80,6 +103,26 @@ struct tac_plus_pak_hdr {
 #define TAC_PLUS_HDR_SIZE	12
 
 #define TAC_MD5_DIGEST_LEN	16
+#define TAC_SHA256_DIGEST_LEN	32
+#define TAC_SHA512_DIGEST_LEN	64
+
+/* Password types for modern hashing */
+#define PASSWORD_TYPE_CLEARTEXT	0
+#define PASSWORD_TYPE_DES	1
+#define PASSWORD_TYPE_FILE	2
+#define PASSWORD_TYPE_PAM	3
+#define PASSWORD_TYPE_SKEY	4
+#define PASSWORD_TYPE_NOPASSWORD	5
+#define PASSWORD_TYPE_BCRYPT	6
+#define PASSWORD_TYPE_ARGON2	7
+#define PASSWORD_TYPE_PBKDF2	8
+#define PASSWORD_TYPE_SHA256	9
+#define PASSWORD_TYPE_SHA512	10
+
+/* Hash algorithms for RFC 8907 compliance */
+#define HASH_ALG_MD5		0
+#define HASH_ALG_SHA256		1
+#define HASH_ALG_SHA512		2
 
 /* accounting record structure */
 struct acct_rec {
@@ -210,16 +253,16 @@ struct identity {
     int priv_lvl;		/* user's requested privilege level */
 };
 
-#if XXX
-XXX unknown
+#if 0
+/* XXX unknown
 #ifdef MSCHAP
 #define MSCHAP_DIGEST_LEN 49
-#endif /* MSCHAP */
+#endif */ /* MSCHAP */
 
-#include <utmp.h>
+/* #include <utmp.h> */
 
-XXX should this be in tacacs.h?
-#include "md5.h"
+/* XXX should this be in tacacs.h?
+#include "md5.h" */
 
 /*
  * You probably shouldn't be changing much below this line unless you really
@@ -470,6 +513,12 @@ int	verify_pwd(char *, char *, struct authen_data *, char *);
 
 /* encrypt.c */
 int	md5_xor(HDR *, u_char *, char *);
+int	sha256_xor(HDR *, u_char *, char *);
+int	sha512_xor(HDR *, u_char *, char *);
+int	create_sha256_hash(int session_id, char *key, u_char version, u_char seq_no,
+		       u_char *prev_hash, u_char *hash);
+int	create_sha512_hash(int session_id, char *key, u_char version, u_char seq_no,
+		       u_char *prev_hash, u_char *hash);
 
 /* packet.c */
 u_char	*get_authen_continue(void);
@@ -487,6 +536,40 @@ extern struct passwd *tac_passwd_lookup(char *, char *);
 void	set_expiration_status(char *, struct authen_data *);
 int	verify(char *, char *, struct authen_data *, int);
 int	verify_pwd(char *, char *, struct authen_data *, char *);
+
+/* Modern password hashing functions */
+#ifdef HAVE_BCRYPT
+int	bcrypt_verify(const char *password, const char *hash);
+char	*bcrypt_hash(const char *password, int cost);
+#else
+/* Stub functions when bcrypt is not available */
+int	bcrypt_verify(const char *password, const char *hash);
+char	*bcrypt_hash(const char *password, int cost);
+#endif
+
+#ifdef HAVE_LIBSODIUM
+int	argon2_verify(const char *password, const char *hash);
+char	*argon2_hash(const char *password, int type, int memory, int time, int parallelism);
+#else
+/* Stub functions when libsodium is not available */
+int	argon2_verify(const char *password, const char *hash);
+char	*argon2_hash(const char *password, int type, int memory, int time, int parallelism);
+#endif
+
+/* PBKDF2 functions removed - use Argon2 or bcrypt instead */
+
+#ifdef HAVE_CRYPT
+int	sha256_verify(const char *password, const char *hash);
+char	*sha256_hash(const char *password, const char *salt, int rounds);
+int	sha512_verify(const char *password, const char *hash);
+char	*sha512_hash(const char *password, const char *salt, int rounds);
+#else
+/* Stub functions when crypt is not available */
+int	sha256_verify(const char *password, const char *hash);
+char	*sha256_hash(const char *password, const char *salt, int rounds);
+int	sha512_verify(const char *password, const char *hash);
+char	*sha512_hash(const char *password, const char *salt, int rounds);
+#endif
 
 int aceclnt_fn(struct authen_data *data);
 int default_v0_fn(struct authen_data *data);

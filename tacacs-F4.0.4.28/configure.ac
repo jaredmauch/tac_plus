@@ -14,8 +14,45 @@ AC_CONFIG_AUX_DIR([aconf])
 AC_CONFIG_MACRO_DIR([aconf])
 AM_INIT_AUTOMAKE
 
+# Define PKG_CHECK_MODULES if not available
+m4_ifndef([PKG_CHECK_MODULES],
+    [m4_define([PKG_CHECK_MODULES],
+        [AC_ARG_VAR([$1][_CFLAGS], [C compiler flags for $1, overriding pkg-config])dnl
+        AC_ARG_VAR([$1][_LIBS], [linker flags for $1, overriding pkg-config])dnl
+        pkg_failed=no
+        AC_MSG_CHECKING([$1])
+        if test -n "$$1_CFLAGS"; then
+            pkg_cv_[]$1[]_CFLAGS="$$1_CFLAGS"
+        else
+            if test -n "$PKG_CONFIG" && test -n "$2"; then
+                pkg_cv_[]$1[]_CFLAGS=`$PKG_CONFIG --cflags "$2" 2>/dev/null`
+            else
+                pkg_failed=yes
+            fi
+        fi
+        if test -n "$$1_LIBS"; then
+            pkg_cv_[]$1[]_LIBS="$$1_LIBS"
+        else
+            if test -n "$PKG_CONFIG" && test -n "$2"; then
+                pkg_cv_[]$1[]_LIBS=`$PKG_CONFIG --libs "$2" 2>/dev/null`
+            else
+                pkg_failed=yes
+            fi
+        fi
+        if test $pkg_failed = yes; then
+            AC_MSG_RESULT([no])
+            $4
+        else
+            AC_MSG_RESULT([yes])
+            $1[]_CFLAGS=$pkg_cv_[]$1[]_CFLAGS
+            $1[]_LIBS=$pkg_cv_[]$1[]_LIBS
+            AC_SUBST($1[]_CFLAGS)
+            AC_SUBST($1[]_LIBS)
+            $3
+        fi])])
+
 # Configure shell for portability
-AC_PROG_SHELL
+# AC_PROG_SHELL is not available in older autoconf versions
 AC_DEFINE_UNQUOTED([CONFIG_SHELL], ["$SHELL"], [Shell used by config.status])
 
 AM_MAINTAINER_MODE()
@@ -772,7 +809,22 @@ AC_CHECK_LIB([pam], [pam_start],
 
 # look for libsodium for Argon2 and modern crypto
 AH_TEMPLATE(HAVE_LIBSODIUM, [define if your system has libsodium])
-PKG_CHECK_MODULES([LIBSODIUM], [libsodium], 
+
+# Check for pkg-config first
+AC_PATH_PROG([PKG_CONFIG], [pkg-config], [no])
+if test "x$PKG_CONFIG" = "xno"; then
+    AC_MSG_WARN([pkg-config not found. Trying manual detection...])
+    # Manual detection without pkg-config
+    AC_CHECK_HEADER([sodium.h], 
+	[AC_CHECK_LIB([sodium], [crypto_pwhash_argon2id_str],
+		[AC_DEFINE(HAVE_LIBSODIUM)
+		 LIBS="-lsodium $LIBS"
+		 LIBSODIUM_LIBS="-lsodium"],
+		[AC_MSG_WARN([libsodium library not found. Argon2 password hashing will be disabled.])])],
+	[AC_MSG_WARN([libsodium headers not found. Argon2 password hashing will be disabled.])])
+else
+    # Use pkg-config if available
+    PKG_CHECK_MODULES([LIBSODIUM], [libsodium], 
 	[AC_DEFINE(HAVE_LIBSODIUM)
 	 LIBS="$LIBSODIUM_LIBS $LIBS"
 	 CPPFLAGS="$LIBSODIUM_CFLAGS $CPPFLAGS"],
@@ -784,6 +836,7 @@ PKG_CHECK_MODULES([LIBSODIUM], [libsodium],
 			 LIBSODIUM_LIBS="-lsodium"],
 			[AC_MSG_WARN([libsodium library not found. Argon2 password hashing will be disabled.])])],
 		[AC_MSG_WARN([libsodium headers not found. Argon2 password hashing will be disabled.])])])
+fi
 
 # Check for bcrypt support in system crypt() function
 AH_TEMPLATE(HAVE_BCRYPT, [define if your system crypt() supports bcrypt])

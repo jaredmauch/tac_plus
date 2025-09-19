@@ -21,6 +21,9 @@
    guide for more details) */
 #undef ARAP_DES
 
+/* Shell used by config.status */
+#undef CONFIG_SHELL
+
 /* define this to include debugging support */
 #undef DBG
 

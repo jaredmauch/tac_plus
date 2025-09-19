@@ -27,6 +27,9 @@
 /* define this if your o/s is FreeBSD */
 #undef FREEBSD
 
+/* Define to 1 if you have the <acexport.h> header file. */
+#undef HAVE_ACEXPORT_H
+
 /* define if your system crypt() supports bcrypt */
 #undef HAVE_BCRYPT
 
@@ -51,6 +54,9 @@
 /* Define to 1 if you have the 'getdtablesize' function. */
 #undef HAVE_GETDTABLESIZE
 
+/* Define to 1 if you have the <grp.h> header file. */
+#undef HAVE_GRP_H
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
@@ -69,20 +75,35 @@
 /* Define to 1 if you have the 'memset' function. */
 #undef HAVE_MEMSET
 
+/* Define to 1 if you have the <netinet/tcp.h> header file. */
+#undef HAVE_NETINET_TCP_H
+
 /* define if your system has libpam */
 #undef HAVE_PAM
 
 /* Define to 1 if the system has the type 'pid_t'. */
 #undef HAVE_PID_T
 
+/* Define to 1 if you have the <poll.h> header file. */
+#undef HAVE_POLL_H
+
 /* Define if you have POSIX threads libraries and header files. */
 #undef HAVE_PTHREAD
+
+/* Define to 1 if you have the <pwd.h> header file. */
+#undef HAVE_PWD_H
 
 /* Define to 1 if you have the 'random' function. */
 #undef HAVE_RANDOM
 
+/* Define to 1 if you have the <regex.h> header file. */
+#undef HAVE_REGEX_H
+
 /* Define to 1 if you have the <shadow.h> header file. */
 #undef HAVE_SHADOW_H
+
+/* Define to 1 if you have the <skey.h> header file. */
+#undef HAVE_SKEY_H
 
 /* Define to 1 if the system has the type 'socklen_t'. */
 #undef HAVE_SOCKLEN_T
@@ -126,6 +147,12 @@
 /* Define to 1 if you have the <syslog.h> header file. */
 #undef HAVE_SYSLOG_H
 
+/* Define to 1 if you have the <sys/file.h> header file. */
+#undef HAVE_SYS_FILE_H
+
+/* Define to 1 if you have the <sys/ioctl.h> header file. */
+#undef HAVE_SYS_IOCTL_H
+
 /* Define to 1 if you have the <sys/resource.h> header file. */
 #undef HAVE_SYS_RESOURCE_H
 
@@ -155,6 +182,9 @@
 
 /* Define to 1 if you have the <utmp.h> header file. */
 #undef HAVE_UTMP_H
+
+/* Define to 1 if you have the <varargs.h> header file. */
+#undef HAVE_VARARGS_H
 
 /* Define to 1 if you have the 'wait3' function. */
 #undef HAVE_WAIT3

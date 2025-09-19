@@ -16633,6 +16633,13 @@ printf "%s\n" "no" >&6; }
 printf "%s\n" "yes" >&6; }
     printf "%s\n" "#define SKEY 1" >>confdefs.h
 
+    ac_fn_c_check_header_compile "$LINENO" "skey.h" "ac_cv_header_skey_h" "$ac_includes_default"
+if test "x$ac_cv_header_skey_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_SKEY_H 1" >>confdefs.h
+
+fi
+
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing skeychallenge" >&5
 printf %s "checking for library containing skeychallenge... " >&6; }
 if test ${ac_cv_search_skeychallenge+y}
@@ -16708,6 +16715,13 @@ fi
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; }
     printf "%s\n" "#define SKEY 1" >>confdefs.h
+
+    ac_fn_c_check_header_compile "$LINENO" "skey.h" "ac_cv_header_skey_h" "$ac_includes_default"
+if test "x$ac_cv_header_skey_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_SKEY_H 1" >>confdefs.h
+
+fi
 
     if test -d "$withval" ; then
 	LDFAGS="$LDFLAGS -L$withval/lib"
@@ -16893,6 +16907,13 @@ printf "%s\n" "no" >&6; }
 printf "%s\n" "yes" >&6; }
     printf "%s\n" "#define ACECLNT 1" >>confdefs.h
 
+    ac_fn_c_check_header_compile "$LINENO" "acexport.h" "ac_cv_header_acexport_h" "$ac_includes_default"
+if test "x$ac_cv_header_acexport_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_ACEXPORT_H 1" >>confdefs.h
+
+fi
+
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing SD_Init" >&5
 printf %s "checking for library containing SD_Init... " >&6; }
 if test ${ac_cv_search_SD_Init+y}
@@ -16968,6 +16989,13 @@ fi
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; }
     printf "%s\n" "#define ACECLNT 1" >>confdefs.h
+
+    ac_fn_c_check_header_compile "$LINENO" "acexport.h" "ac_cv_header_acexport_h" "$ac_includes_default"
+if test "x$ac_cv_header_acexport_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_ACEXPORT_H 1" >>confdefs.h
+
+fi
 
     if test -d "$withval" ; then
 	LDFAGS="$LDFLAGS -L$withval/lib"
@@ -18246,6 +18274,66 @@ ac_fn_c_check_header_compile "$LINENO" "sodium.h" "ac_cv_header_sodium_h" "$ac_i
 if test "x$ac_cv_header_sodium_h" = xyes
 then :
   printf "%s\n" "#define HAVE_SODIUM_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "grp.h" "ac_cv_header_grp_h" "$ac_includes_default"
+if test "x$ac_cv_header_grp_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_GRP_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "poll.h" "ac_cv_header_poll_h" "$ac_includes_default"
+if test "x$ac_cv_header_poll_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_POLL_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "pwd.h" "ac_cv_header_pwd_h" "$ac_includes_default"
+if test "x$ac_cv_header_pwd_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_PWD_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "netinet/tcp.h" "ac_cv_header_netinet_tcp_h" "$ac_includes_default"
+if test "x$ac_cv_header_netinet_tcp_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_NETINET_TCP_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "sys/ioctl.h" "ac_cv_header_sys_ioctl_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_ioctl_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_SYS_IOCTL_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "sys/file.h" "ac_cv_header_sys_file_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_file_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_SYS_FILE_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "regex.h" "ac_cv_header_regex_h" "$ac_includes_default"
+if test "x$ac_cv_header_regex_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_REGEX_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "varargs.h" "ac_cv_header_varargs_h" "$ac_includes_default"
+if test "x$ac_cv_header_varargs_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_VARARGS_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "skey.h" "ac_cv_header_skey_h" "$ac_includes_default"
+if test "x$ac_cv_header_skey_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_SKEY_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "acexport.h" "ac_cv_header_acexport_h" "$ac_includes_default"
+if test "x$ac_cv_header_acexport_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_ACEXPORT_H 1" >>confdefs.h
 
 fi
 

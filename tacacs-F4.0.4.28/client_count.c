@@ -160,7 +160,7 @@ int increment_client_count_for_proc(pid_t process_id, char* client_ip)
   return increment_client_count(client_ip);
 }
 
-void dump_client_tables()
+void dump_client_tables(void)
 {
   CLIENT *cl;
   PROC_CLIENT *pc;

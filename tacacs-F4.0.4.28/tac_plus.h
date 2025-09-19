@@ -396,7 +396,7 @@ void remove_client_entry(char*);
 void remove_proc_entry(char*);
 void create_proc_client_map(pid_t, char*);
 void delete_proc_client_map(pid_t);
-void dump_client_tables();
+void dump_client_tables(void);
 
 struct client_st {
     char *name;     /* host name */

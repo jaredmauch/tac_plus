@@ -784,7 +784,7 @@ parse_acl(void)
  * Return 1 on error, otherwise 0
  */
 static int
-parse_decls()
+parse_decls(void)
 {
 
     sym_code = 0;

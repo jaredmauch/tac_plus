@@ -277,7 +277,7 @@ reapchild(int notused)
 }
 #endif
 void
-reapchildren()
+reapchildren(void)
 {
 #ifdef UNIONWAIT
   union wait status;

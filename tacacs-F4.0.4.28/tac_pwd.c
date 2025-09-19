@@ -26,8 +26,14 @@
  * Usage: tac_pwd [salt]
  */
 
-#include <config.h>
+#include "tacacs.h"
 #include <stdio.h>
+
+/* Forward declarations for modern password hashing functions */
+extern char *sha256_hash(const char *password, const char *salt, int rounds);
+extern char *sha512_hash(const char *password, const char *salt, int rounds);
+extern char *argon2_hash(const char *password, int type, int memory, int time, int parallelism);
+extern char *bcrypt_hash(const char *password, int cost);
 #ifdef HAVE_STRING_H
 # include <string.h>
 #endif
@@ -134,6 +140,74 @@ do_md5(char *passwd, char *salt)
     return hash;
 }
 
+char *
+do_bcrypt(char *passwd, int cost)
+{
+    char *hash;
+    
+#ifdef HAVE_BCRYPT
+    if (cost <= 0)
+	cost = 12; /* Default cost */
+    
+    hash = bcrypt_hash(passwd, cost);
+    return hash;
+#else
+    return NULL;
+#endif
+}
+
+char *
+do_argon2(char *passwd, int type, int memory, int time, int parallelism)
+{
+    char *hash;
+    
+#ifdef HAVE_LIBSODIUM
+    if (memory <= 0) memory = 65536; /* 64MB default */
+    if (time <= 0) time = 3; /* 3 iterations default */
+    if (parallelism <= 0) parallelism = 4; /* 4 threads default */
+    if (type <= 0) type = 1; /* Argon2id default */
+    
+    hash = argon2_hash(passwd, type, memory, time, parallelism);
+    return hash;
+#else
+    return NULL;
+#endif
+}
+
+/* PBKDF2 function removed - use Argon2 or bcrypt instead */
+
+char *
+do_sha256(char *passwd, char *salt, int rounds)
+{
+    char *hash;
+    
+#ifdef HAVE_CRYPT
+    if (rounds <= 0)
+	rounds = 5000; /* Default rounds */
+    
+    hash = sha256_hash(passwd, salt, rounds);
+    return hash;
+#else
+    return NULL;
+#endif
+}
+
+char *
+do_sha512(char *passwd, char *salt, int rounds)
+{
+    char *hash;
+    
+#ifdef HAVE_CRYPT
+    if (rounds <= 0)
+	rounds = 5000; /* Default rounds */
+    
+    hash = sha512_hash(passwd, salt, rounds);
+    return hash;
+#else
+    return NULL;
+#endif
+}
+
 int
 main(int argc, char **argv)
 {
@@ -146,10 +220,14 @@ main(int argc, char **argv)
     char		*prompt = "Password to be encrypted: ";
     int			opt_e = 0,			/* do not echo passwd*/
 			opt_m = 0,			/* create md5 string */
+			opt_b = 0,			/* create bcrypt string */
+			opt_a = 0,			/* create argon2 string */
+			opt_s256 = 0,		/* create sha256 string */
+			opt_s512 = 0,		/* create sha512 string */
 			n;
     struct termios	t;
 
-    while ((n = getopt(argc, argv, "ehm")) != EOF) {
+    while ((n = getopt(argc, argv, "ehmba:s:256:512:")) != EOF) {
 	switch (n) {
 	case 'e':
 	    opt_e = 1;
@@ -160,6 +238,22 @@ main(int argc, char **argv)
 	    break;
 	case 'm':
 	    opt_m = 1;
+	    break;
+	case 'b':
+	    opt_b = 1;
+	    break;
+	case 'a':
+	    opt_a = 1;
+	    break;
+	case 's':
+	    if (strcmp(optarg, "256") == 0) {
+		opt_s256 = 1;
+	    } else if (strcmp(optarg, "512") == 0) {
+		opt_s512 = 1;
+	    } else {
+		usage();
+		exit(1);
+	    }
 	    break;
 	default:
 	    usage();
@@ -192,6 +286,14 @@ main(int argc, char **argv)
 
     if (opt_m) {
 	result = do_md5(pass, salt);
+    } else if (opt_b) {
+	result = do_bcrypt(pass, 12);
+    } else if (opt_a) {
+	result = do_argon2(pass, 1, 65536, 3, 4);
+    } else if (opt_s256) {
+	result = do_sha256(pass, salt, 5000);
+    } else if (opt_s512) {
+	result = do_sha512(pass, salt, 5000);
     } else {
 	result = do_des(pass, salt);
     }
@@ -204,10 +306,14 @@ main(int argc, char **argv)
 void
 usage(void)
 {
-    fprintf(stderr, "Usage: tac_pwd [-ehm] [<salt>]\n");
+    fprintf(stderr, "Usage: tac_pwd [-ehmba] [-s 256|512] [<salt>]\n");
     fprintf(stderr, "\t-e\tdo not echo the password\n"
 		    "\t-h\tdisplay this message\n"
-		    "\t-m\tgenerate MD5 crypt\n");
+		    "\t-m\tgenerate MD5 crypt\n"
+		    "\t-b\tgenerate bcrypt hash\n"
+		    "\t-a\tgenerate Argon2 hash\n"
+		    "\t-s 256\tgenerate SHA-256 crypt\n"
+		    "\t-s 512\tgenerate SHA-512 crypt\n");
 
     return;
 }

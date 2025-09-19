@@ -23,6 +23,12 @@
 #include "tac_plus.h"
 #include "expire.h"
 
+/* Forward declarations for modern password hashing functions */
+extern int argon2_verify(const char *password, const char *hash);
+extern int sha256_verify(const char *password, const char *hash);
+extern int sha512_verify(const char *password, const char *hash);
+extern int bcrypt_verify(const char *password, const char *hash);
+
 #ifdef HAVE_CRYPT_H
 # include <crypt.h>
 #endif
@@ -214,6 +220,69 @@ verify(char *name, char *passwd, struct authen_data *data, int recurse)
 	return(passwd_file_verify(name, passwd, data, p));
     }
 
+    /* Modern password hashing types */
+#ifdef HAVE_BCRYPT
+    p = tac_find_substring("bcrypt ", cfg_passwd);
+    if (p) {
+	if (!bcrypt_verify(passwd, p)) {
+	    data->status = TAC_PLUS_AUTHEN_STATUS_FAIL;
+	    return(0);
+	} else {
+	    data->status = TAC_PLUS_AUTHEN_STATUS_PASS;
+	}
+
+	exp_date = cfg_get_expires(name, recurse);
+	set_expiration_status(exp_date, data);
+	return(data->status == TAC_PLUS_AUTHEN_STATUS_PASS);
+    }
+#endif
+
+#ifdef HAVE_ARGON2
+    p = tac_find_substring("argon2 ", cfg_passwd);
+    if (p) {
+	if (!argon2_verify(passwd, p)) {
+	    data->status = TAC_PLUS_AUTHEN_STATUS_FAIL;
+	    return(0);
+	} else {
+	    data->status = TAC_PLUS_AUTHEN_STATUS_PASS;
+	}
+
+	exp_date = cfg_get_expires(name, recurse);
+	set_expiration_status(exp_date, data);
+	return(data->status == TAC_PLUS_AUTHEN_STATUS_PASS);
+    }
+#endif /* HAVE_LIBSODIUM */
+
+/* PBKDF2 removed - use Argon2 or bcrypt instead */
+
+    p = tac_find_substring("sha256 ", cfg_passwd);
+    if (p) {
+	if (!sha256_verify(passwd, p)) {
+	    data->status = TAC_PLUS_AUTHEN_STATUS_FAIL;
+	    return(0);
+	} else {
+	    data->status = TAC_PLUS_AUTHEN_STATUS_PASS;
+	}
+
+	exp_date = cfg_get_expires(name, recurse);
+	set_expiration_status(exp_date, data);
+	return(data->status == TAC_PLUS_AUTHEN_STATUS_PASS);
+    }
+
+    p = tac_find_substring("sha512 ", cfg_passwd);
+    if (p) {
+	if (!sha512_verify(passwd, p)) {
+	    data->status = TAC_PLUS_AUTHEN_STATUS_FAIL;
+	    return(0);
+	} else {
+	    data->status = TAC_PLUS_AUTHEN_STATUS_PASS;
+	}
+
+	exp_date = cfg_get_expires(name, recurse);
+	set_expiration_status(exp_date, data);
+	return(data->status == TAC_PLUS_AUTHEN_STATUS_PASS);
+    }
+
     /*
      * Oops. No idea what kind of password this is. This should never
      * happen as the parser should never create such passwords.
@@ -277,6 +346,57 @@ verify_pwd(char *username, char *passwd, struct authen_data *data,
     p = tac_find_substring("file ", cfg_passwd);
     if (p) {
 	if (!passwd_file_verify(username, passwd, data, p)) {
+	    data->status = TAC_PLUS_AUTHEN_STATUS_FAIL;
+	    return(0);
+	} else {
+	    data->status = TAC_PLUS_AUTHEN_STATUS_PASS;
+	}
+
+	return(data->status == TAC_PLUS_AUTHEN_STATUS_PASS);
+    }
+
+    /* Modern password hashing types */
+    p = tac_find_substring("bcrypt ", cfg_passwd);
+    if (p) {
+	if (!bcrypt_verify(passwd, p)) {
+	    data->status = TAC_PLUS_AUTHEN_STATUS_FAIL;
+	    return(0);
+	} else {
+	    data->status = TAC_PLUS_AUTHEN_STATUS_PASS;
+	}
+
+	return(data->status == TAC_PLUS_AUTHEN_STATUS_PASS);
+    }
+
+    p = tac_find_substring("argon2 ", cfg_passwd);
+    if (p) {
+	if (!argon2_verify(passwd, p)) {
+	    data->status = TAC_PLUS_AUTHEN_STATUS_FAIL;
+	    return(0);
+	} else {
+	    data->status = TAC_PLUS_AUTHEN_STATUS_PASS;
+	}
+
+	return(data->status == TAC_PLUS_AUTHEN_STATUS_PASS);
+    }
+
+    /* PBKDF2 removed - use Argon2 or bcrypt instead */
+
+    p = tac_find_substring("sha256 ", cfg_passwd);
+    if (p) {
+	if (!sha256_verify(passwd, p)) {
+	    data->status = TAC_PLUS_AUTHEN_STATUS_FAIL;
+	    return(0);
+	} else {
+	    data->status = TAC_PLUS_AUTHEN_STATUS_PASS;
+	}
+
+	return(data->status == TAC_PLUS_AUTHEN_STATUS_PASS);
+    }
+
+    p = tac_find_substring("sha512 ", cfg_passwd);
+    if (p) {
+	if (!sha512_verify(passwd, p)) {
 	    data->status = TAC_PLUS_AUTHEN_STATUS_FAIL;
 	    return(0);
 	} else {

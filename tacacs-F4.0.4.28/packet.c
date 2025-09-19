@@ -21,7 +21,9 @@
  */
 
 #include "tac_plus.h"
-#include <poll.h>
+#ifdef HAVE_POLL_H
+# include <poll.h>
+#endif
 #include <netdb.h>
 #include <signal.h>
 #include <time.h>
@@ -448,7 +450,15 @@ sockread(int fd, u_char *ptr, int nbytes, int timeout)
 	    continue;
 	}
     again:
+#ifdef HAVE_TLS
+	if (tls_is_connected()) {
+	    nread = tls_read(ptr, nleft);
+	} else {
+	    nread = read(fd, ptr, nleft);
+	}
+#else
 	nread = read(fd, ptr, nleft);
+#endif
 
 	if (nread < 0) {
 	    if (errno == EINTR)
@@ -516,7 +526,15 @@ sockwrite(int fd, u_char *ptr, int bytes, int timeout)
 	    report(LOG_DEBUG, "%s: spurious return from poll", session.peer);
 	    continue;
 	}
+#ifdef HAVE_TLS
+	if (tls_is_connected()) {
+	    sent = tls_write(ptr, remaining);
+	} else {
+	    sent = write(fd, ptr, remaining);
+	}
+#else
 	sent = write(fd, ptr, remaining);
+#endif
 
 	if (sent <= 0) {
 	    status = errno;

@@ -128,6 +128,11 @@ parser_init(void)
     declare("writetimeout", S_writetimeout);
     declare("accepttimeout", S_accepttimeout);
     declare("logauthor", S_logauthor);
+    declare("tls", S_tls);
+    declare("tls-cert", S_tls_cert);
+    declare("tls-key", S_tls_key);
+    declare("tls-ca", S_tls_ca);
+    declare("tls-port", S_tls_port);
 
 }
 

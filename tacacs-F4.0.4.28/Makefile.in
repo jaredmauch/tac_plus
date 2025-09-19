@@ -165,9 +165,9 @@ libtacacs_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 am__tac_plus_SOURCES_DIST = acct.c authen.c author.c choose_authen.c \
 	client_count.c config.c default_fn.c default_v0_fn.c do_acct.c \
 	do_author.c dump.c enable.c encrypt.c expire.c hash.c \
-	maxsessint.c parse.c programs.c pw.c pwlib.c report.c \
-	sendauth.c sendpass.c tac_plus.c utils.c skey_fn.c \
-	aceclnt_fn.c
+	maxsessint.c modern_crypto.c parse.c programs.c pw.c pwlib.c \
+	report.c sendauth.c sendpass.c tac_plus.c tls_support.c \
+	utils.c skey_fn.c aceclnt_fn.c
 @TACSKEY_TRUE@am__objects_1 = skey_fn.$(OBJEXT)
 @TACACECLNT_TRUE@am__objects_2 = aceclnt_fn.$(OBJEXT)
 am_tac_plus_OBJECTS = acct.$(OBJEXT) authen.$(OBJEXT) author.$(OBJEXT) \
@@ -175,21 +175,24 @@ am_tac_plus_OBJECTS = acct.$(OBJEXT) authen.$(OBJEXT) author.$(OBJEXT) \
 	config.$(OBJEXT) default_fn.$(OBJEXT) default_v0_fn.$(OBJEXT) \
 	do_acct.$(OBJEXT) do_author.$(OBJEXT) dump.$(OBJEXT) \
 	enable.$(OBJEXT) encrypt.$(OBJEXT) expire.$(OBJEXT) \
-	hash.$(OBJEXT) maxsessint.$(OBJEXT) parse.$(OBJEXT) \
-	programs.$(OBJEXT) pw.$(OBJEXT) pwlib.$(OBJEXT) \
-	report.$(OBJEXT) sendauth.$(OBJEXT) sendpass.$(OBJEXT) \
-	tac_plus.$(OBJEXT) utils.$(OBJEXT) $(am__objects_1) \
-	$(am__objects_2)
+	hash.$(OBJEXT) maxsessint.$(OBJEXT) modern_crypto.$(OBJEXT) \
+	parse.$(OBJEXT) programs.$(OBJEXT) pw.$(OBJEXT) \
+	pwlib.$(OBJEXT) report.$(OBJEXT) sendauth.$(OBJEXT) \
+	sendpass.$(OBJEXT) tac_plus.$(OBJEXT) tls_support.$(OBJEXT) \
+	utils.$(OBJEXT) $(am__objects_1) $(am__objects_2)
 tac_plus_OBJECTS = $(am_tac_plus_OBJECTS)
 am__DEPENDENCIES_1 =
 tac_plus_DEPENDENCIES = $(am__DEPENDENCIES_1) libtacacs.la
 tac_plus_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(tac_plus_LDFLAGS) $(LDFLAGS) -o $@
-am_tac_pwd_OBJECTS = tac_pwd.$(OBJEXT)
+am_tac_pwd_OBJECTS = tac_pwd-tac_pwd.$(OBJEXT) \
+	tac_pwd-modern_crypto.$(OBJEXT)
 tac_pwd_OBJECTS = $(am_tac_pwd_OBJECTS)
-tac_pwd_LDADD = $(LDADD)
-tac_pwd_DEPENDENCIES = $(am__DEPENDENCIES_1)
+tac_pwd_DEPENDENCIES =
+tac_pwd_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(tac_pwd_CFLAGS) \
+	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SCRIPTS = $(pkgdata_SCRIPTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -219,11 +222,13 @@ am__depfiles_remade = ./$(DEPDIR)/acct.Po ./$(DEPDIR)/aceclnt_fn.Po \
 	./$(DEPDIR)/libtacacs_la-md4.Plo \
 	./$(DEPDIR)/libtacacs_la-md5.Plo \
 	./$(DEPDIR)/libtacacs_la-packet.Plo ./$(DEPDIR)/maxsessint.Po \
-	./$(DEPDIR)/parse.Po ./$(DEPDIR)/programs.Po ./$(DEPDIR)/pw.Po \
-	./$(DEPDIR)/pwlib.Po ./$(DEPDIR)/report.Po \
-	./$(DEPDIR)/sendauth.Po ./$(DEPDIR)/sendpass.Po \
-	./$(DEPDIR)/skey_fn.Po ./$(DEPDIR)/tac_plus.Po \
-	./$(DEPDIR)/tac_pwd.Po ./$(DEPDIR)/utils.Po
+	./$(DEPDIR)/modern_crypto.Po ./$(DEPDIR)/parse.Po \
+	./$(DEPDIR)/programs.Po ./$(DEPDIR)/pw.Po ./$(DEPDIR)/pwlib.Po \
+	./$(DEPDIR)/report.Po ./$(DEPDIR)/sendauth.Po \
+	./$(DEPDIR)/sendpass.Po ./$(DEPDIR)/skey_fn.Po \
+	./$(DEPDIR)/tac_plus.Po ./$(DEPDIR)/tac_pwd-modern_crypto.Po \
+	./$(DEPDIR)/tac_pwd-tac_pwd.Po ./$(DEPDIR)/tls_support.Po \
+	./$(DEPDIR)/utils.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -323,13 +328,15 @@ CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 
 # profiling
-CFLAGS = @CFLAGS@ $(WARN) $(DBG) $(PROFLAGS) $(WRAPINCS)
+CFLAGS = @CFLAGS@ $(WARN) $(DBG) $(PROFLAGS) $(WRAPINCS) \
+	@LIBSODIUM_CFLAGS@ $(am__empty)
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CSCOPE = @CSCOPE@
 CTAGS = @CTAGS@
 CYGPATH_W = @CYGPATH_W@
 DBG = @DBG@
+DEBUG_SECRET_LOGGING = @DEBUG_SECRET_LOGGING@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
@@ -339,6 +346,9 @@ ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
+ENABLE_ASCII = @ENABLE_ASCII@
+ENABLE_PAP = @ENABLE_PAP@
+ENABLE_SENDPASS = @ENABLE_SENDPASS@
 ETAGS = @ETAGS@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
@@ -357,6 +367,8 @@ LEXLIB = @LEXLIB@
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LIBSODIUM_CFLAGS = @LIBSODIUM_CFLAGS@
+LIBSODIUM_LIBS = @LIBSODIUM_LIBS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
@@ -386,6 +398,9 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PKG_CONFIG = @PKG_CONFIG@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 PROFLAGS = @PROFLAGS@
 PROFLIBS = @PROFLIBS@
 PTHREAD_CC = @PTHREAD_CC@
@@ -404,6 +419,11 @@ TACPLUS_PIDFILE = @TACPLUS_PIDFILE@
 TACPLUS_USERID = @TACPLUS_USERID@
 TACPLUS_WHOLOGFILE = @TACPLUS_WHOLOGFILE@
 TAR = @TAR@
+TLS_CA_PATH = @TLS_CA_PATH@
+TLS_CERT_PATH = @TLS_CERT_PATH@
+TLS_KEY_PATH = @TLS_KEY_PATH@
+TLS_LIBS = @TLS_LIBS@
+TLS_PORT = @TLS_PORT@
 UENABLE = @UENABLE@
 VERSION = @VERSION@
 WARN = @WARN@
@@ -471,15 +491,17 @@ top_srcdir = @top_srcdir@
 #AUTOMAKE_OPTIONS=foreign no-dependencies
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I aconf
-tac_pwd_SOURCES = tac_pwd.c
+tac_pwd_SOURCES = tac_pwd.c modern_crypto.c
+tac_pwd_CFLAGS = -DTAC_PWD_ONLY @LIBSODIUM_CFLAGS@
+tac_pwd_LDADD = @LIBSODIUM_LIBS@ -lcrypt
 tac_plus_SOURCES = acct.c authen.c author.c choose_authen.c \
 	client_count.c config.c default_fn.c default_v0_fn.c do_acct.c \
 	do_author.c dump.c enable.c encrypt.c expire.c hash.c \
-	maxsessint.c parse.c programs.c pw.c pwlib.c report.c \
-	sendauth.c sendpass.c tac_plus.c utils.c $(am__append_1) \
-	$(am__append_2)
+	maxsessint.c modern_crypto.c parse.c programs.c pw.c pwlib.c \
+	report.c sendauth.c sendpass.c tac_plus.c tls_support.c \
+	utils.c $(am__append_1) $(am__append_2)
 tac_plus_LDFLAGS = -L$(top_srcdir)
-tac_plus_LDADD = $(WRAPLIBS) libtacacs.la
+tac_plus_LDADD = $(WRAPLIBS) libtacacs.la @LIBSODIUM_LIBS@ @TLS_LIBS@ -lcrypt
 lib_LTLIBRARIES = libtacacs.la
 libtacacs_la_SOURCES = fdes.c maxsess.c md4.c md5.c packet.c
 libtacacs_la_CFLAGS = @CFLAGS@ $(WARN) $(DBG) @PROFLAGS@
@@ -488,7 +510,7 @@ libtacacs_la_LDFLAGS = -version-info 1:0:0 -version-number 1:0:0 \
 	@LDFLAGS@ @PROFLIBS@ $(am__empty)
 BUILT_SOURCES = 
 LDADD = $(PROFLIBS)
-AM_CPPFLAGS = $(WRAPINCS)
+AM_CPPFLAGS = $(WRAPINCS) @LIBSODIUM_CFLAGS@
 # AM_CPPFLAGS += -I$(top_srcdir)/include @PG_CPPFLAGS@
 include_HEADERS = tacacs.h
 noinst_HEADERS = fdes.h des_iip.h des_ip.h des_key.h des_s_p.h md4.h mschap.h \
@@ -728,7 +750,7 @@ tac_plus$(EXEEXT): $(tac_plus_OBJECTS) $(tac_plus_DEPENDENCIES) $(EXTRA_tac_plus
 
 tac_pwd$(EXEEXT): $(tac_pwd_OBJECTS) $(tac_pwd_DEPENDENCIES) $(EXTRA_tac_pwd_DEPENDENCIES) 
 	@rm -f tac_pwd$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(tac_pwd_OBJECTS) $(tac_pwd_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(tac_pwd_LINK) $(tac_pwd_OBJECTS) $(tac_pwd_LDADD) $(LIBS)
 install-pkgdataSCRIPTS: $(pkgdata_SCRIPTS)
 	@$(NORMAL_INSTALL)
 	@list='$(pkgdata_SCRIPTS)'; test -n "$(pkgdatadir)" || list=; \
@@ -793,6 +815,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtacacs_la-md5.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtacacs_la-packet.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/maxsessint.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/modern_crypto.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parse.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/programs.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pw.Po@am__quote@ # am--include-marker
@@ -802,7 +825,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sendpass.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skey_fn.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tac_plus.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tac_pwd.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tac_pwd-modern_crypto.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tac_pwd-tac_pwd.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tls_support.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
@@ -866,6 +891,34 @@ libtacacs_la-packet.lo: packet.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='packet.c' object='libtacacs_la-packet.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtacacs_la_CFLAGS) $(CFLAGS) -c -o libtacacs_la-packet.lo `test -f 'packet.c' || echo '$(srcdir)/'`packet.c
+
+tac_pwd-tac_pwd.o: tac_pwd.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tac_pwd_CFLAGS) $(CFLAGS) -MT tac_pwd-tac_pwd.o -MD -MP -MF $(DEPDIR)/tac_pwd-tac_pwd.Tpo -c -o tac_pwd-tac_pwd.o `test -f 'tac_pwd.c' || echo '$(srcdir)/'`tac_pwd.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tac_pwd-tac_pwd.Tpo $(DEPDIR)/tac_pwd-tac_pwd.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tac_pwd.c' object='tac_pwd-tac_pwd.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tac_pwd_CFLAGS) $(CFLAGS) -c -o tac_pwd-tac_pwd.o `test -f 'tac_pwd.c' || echo '$(srcdir)/'`tac_pwd.c
+
+tac_pwd-tac_pwd.obj: tac_pwd.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tac_pwd_CFLAGS) $(CFLAGS) -MT tac_pwd-tac_pwd.obj -MD -MP -MF $(DEPDIR)/tac_pwd-tac_pwd.Tpo -c -o tac_pwd-tac_pwd.obj `if test -f 'tac_pwd.c'; then $(CYGPATH_W) 'tac_pwd.c'; else $(CYGPATH_W) '$(srcdir)/tac_pwd.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tac_pwd-tac_pwd.Tpo $(DEPDIR)/tac_pwd-tac_pwd.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tac_pwd.c' object='tac_pwd-tac_pwd.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tac_pwd_CFLAGS) $(CFLAGS) -c -o tac_pwd-tac_pwd.obj `if test -f 'tac_pwd.c'; then $(CYGPATH_W) 'tac_pwd.c'; else $(CYGPATH_W) '$(srcdir)/tac_pwd.c'; fi`
+
+tac_pwd-modern_crypto.o: modern_crypto.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tac_pwd_CFLAGS) $(CFLAGS) -MT tac_pwd-modern_crypto.o -MD -MP -MF $(DEPDIR)/tac_pwd-modern_crypto.Tpo -c -o tac_pwd-modern_crypto.o `test -f 'modern_crypto.c' || echo '$(srcdir)/'`modern_crypto.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tac_pwd-modern_crypto.Tpo $(DEPDIR)/tac_pwd-modern_crypto.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='modern_crypto.c' object='tac_pwd-modern_crypto.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tac_pwd_CFLAGS) $(CFLAGS) -c -o tac_pwd-modern_crypto.o `test -f 'modern_crypto.c' || echo '$(srcdir)/'`modern_crypto.c
+
+tac_pwd-modern_crypto.obj: modern_crypto.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tac_pwd_CFLAGS) $(CFLAGS) -MT tac_pwd-modern_crypto.obj -MD -MP -MF $(DEPDIR)/tac_pwd-modern_crypto.Tpo -c -o tac_pwd-modern_crypto.obj `if test -f 'modern_crypto.c'; then $(CYGPATH_W) 'modern_crypto.c'; else $(CYGPATH_W) '$(srcdir)/modern_crypto.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tac_pwd-modern_crypto.Tpo $(DEPDIR)/tac_pwd-modern_crypto.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='modern_crypto.c' object='tac_pwd-modern_crypto.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tac_pwd_CFLAGS) $(CFLAGS) -c -o tac_pwd-modern_crypto.obj `if test -f 'modern_crypto.c'; then $(CYGPATH_W) 'modern_crypto.c'; else $(CYGPATH_W) '$(srcdir)/modern_crypto.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -1310,6 +1363,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libtacacs_la-md5.Plo
 	-rm -f ./$(DEPDIR)/libtacacs_la-packet.Plo
 	-rm -f ./$(DEPDIR)/maxsessint.Po
+	-rm -f ./$(DEPDIR)/modern_crypto.Po
 	-rm -f ./$(DEPDIR)/parse.Po
 	-rm -f ./$(DEPDIR)/programs.Po
 	-rm -f ./$(DEPDIR)/pw.Po
@@ -1319,7 +1373,9 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/sendpass.Po
 	-rm -f ./$(DEPDIR)/skey_fn.Po
 	-rm -f ./$(DEPDIR)/tac_plus.Po
-	-rm -f ./$(DEPDIR)/tac_pwd.Po
+	-rm -f ./$(DEPDIR)/tac_pwd-modern_crypto.Po
+	-rm -f ./$(DEPDIR)/tac_pwd-tac_pwd.Po
+	-rm -f ./$(DEPDIR)/tls_support.Po
 	-rm -f ./$(DEPDIR)/utils.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
@@ -1392,6 +1448,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libtacacs_la-md5.Plo
 	-rm -f ./$(DEPDIR)/libtacacs_la-packet.Plo
 	-rm -f ./$(DEPDIR)/maxsessint.Po
+	-rm -f ./$(DEPDIR)/modern_crypto.Po
 	-rm -f ./$(DEPDIR)/parse.Po
 	-rm -f ./$(DEPDIR)/programs.Po
 	-rm -f ./$(DEPDIR)/pw.Po
@@ -1401,7 +1458,9 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/sendpass.Po
 	-rm -f ./$(DEPDIR)/skey_fn.Po
 	-rm -f ./$(DEPDIR)/tac_plus.Po
-	-rm -f ./$(DEPDIR)/tac_pwd.Po
+	-rm -f ./$(DEPDIR)/tac_pwd-modern_crypto.Po
+	-rm -f ./$(DEPDIR)/tac_pwd-tac_pwd.Po
+	-rm -f ./$(DEPDIR)/tls_support.Po
 	-rm -f ./$(DEPDIR)/utils.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
@@ -1467,6 +1526,22 @@ users_guide: Makefile $(srcdir)/users_guide.in
 	rm -f users_guide users_guide.tmp; \
 	$(auto_edit) $(srcdir)/users_guide.in >users_guide.tmp; \
 	mv users_guide.tmp users_guide
+
+# Test target - runs basic functionality tests
+test: all
+	@echo "Running basic functionality tests..."
+	@echo "Testing tac_pwd with different hash methods:"
+	@echo "test" | ./tac_pwd -m md5 | grep -q '$$1$$md' && echo "  MD5: PASS" || echo "  MD5: FAIL"
+	@echo "test" | ./tac_pwd -m bcrypt | grep -q '$$1$$bc' && echo "  bcrypt: PASS" || echo "  bcrypt: FAIL"
+	@echo "test" | ./tac_pwd -m argon2id | grep -q '$$1$$ar' && echo "  argon2id: PASS" || echo "  argon2id: FAIL"
+	@echo "Testing tac_plus binary:"
+	@./tac_plus -v >/dev/null 2>&1 || test $$? -eq 1 && echo "  tac_plus version: PASS" || echo "  tac_plus version: FAIL"
+	@echo "All tests completed."
+
+# Pedantic target - builds with -pedantic flag
+pedantic: clean
+	@echo "Building with -pedantic flag..."
+	$(MAKE) CFLAGS="$(CFLAGS) -pedantic" all
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

@@ -159,8 +159,10 @@ outbound_pap(struct authen_data *data)
     if (!p) {
 	/* Should never happen */
 	data->status = TAC_PLUS_AUTHEN_STATUS_ERROR;
+#ifdef DEBUG_SECRET_LOGGING
 	report(LOG_ERR, "%s %s: Illegal opap secret format %s",
 	       session.peer, session.port, secret);
+#endif
 	return;
     }
 
@@ -228,8 +230,10 @@ outbound_chap(struct authen_data *data)
     if (!p) {
 	/* Should never happen */
 	data->status = TAC_PLUS_AUTHEN_STATUS_ERROR;
+#ifdef DEBUG_SECRET_LOGGING
 	report(LOG_ERR, "%s %s: Illegal opap secret format %s",
 	       session.peer, session.port, secret);
+#endif
 	return;
     }
     secret = p;
@@ -318,8 +322,10 @@ outbound_mschap(struct authen_data *data)
     if (!p) {
 	/* Should never happen */
 	data->status = TAC_PLUS_AUTHEN_STATUS_ERROR;
+#ifdef DEBUG_SECRET_LOGGING
 	report(LOG_ERR, "%s %s: Illegal ms-chap secret format %s",
 	       session.peer, session.port, secret);
+#endif
 	return;
     }
     secret = p;

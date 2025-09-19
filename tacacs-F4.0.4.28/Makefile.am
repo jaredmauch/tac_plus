@@ -10,11 +10,13 @@ ACLOCAL_AMFLAGS=-I aconf
 
 bin_PROGRAMS = tac_pwd
 sbin_PROGRAMS = tac_plus
-tac_pwd_SOURCES = tac_pwd.c
+tac_pwd_SOURCES = tac_pwd.c modern_crypto.c
+tac_pwd_CFLAGS = -DTAC_PWD_ONLY @LIBSODIUM_CFLAGS@
+tac_pwd_LDADD = @LIBSODIUM_LIBS@ -lcrypt
 tac_plus_SOURCES = acct.c authen.c author.c choose_authen.c client_count.c \
   config.c default_fn.c default_v0_fn.c do_acct.c do_author.c dump.c enable.c \
-	encrypt.c expire.c hash.c maxsessint.c parse.c programs.c pw.c pwlib.c \
-	report.c sendauth.c sendpass.c tac_plus.c utils.c
+	encrypt.c expire.c hash.c maxsessint.c modern_crypto.c parse.c programs.c pw.c pwlib.c \
+	report.c sendauth.c sendpass.c tac_plus.c tls_support.c utils.c
 if TACSKEY
 tac_plus_SOURCES += skey_fn.c
 endif
@@ -22,7 +24,7 @@ if TACACECLNT
 tac_plus_SOURCES += aceclnt_fn.c
 endif
 tac_plus_LDFLAGS = -L$(top_srcdir)
-tac_plus_LDADD = $(WRAPLIBS) libtacacs.la
+tac_plus_LDADD = $(WRAPLIBS) libtacacs.la @LIBSODIUM_LIBS@ @TLS_LIBS@ -lcrypt
 
 lib_LTLIBRARIES = libtacacs.la
 libtacacs_la_SOURCES = fdes.c maxsess.c md4.c md5.c packet.c
@@ -34,9 +36,9 @@ libtacacs_la_LDFLAGS += @LDFLAGS@ @PROFLIBS@
 BUILT_SOURCES =
 
 # profiling
-CFLAGS += $(WARN) $(DBG) $(PROFLAGS) $(WRAPINCS)
+CFLAGS += $(WARN) $(DBG) $(PROFLAGS) $(WRAPINCS) @LIBSODIUM_CFLAGS@
 LDADD = $(PROFLIBS)
-AM_CPPFLAGS = $(WRAPINCS)
+AM_CPPFLAGS = $(WRAPINCS) @LIBSODIUM_CFLAGS@
 # AM_CPPFLAGS += -I$(top_srcdir)/include @PG_CPPFLAGS@
 
 include_HEADERS = tacacs.h
@@ -96,3 +98,19 @@ users_guide: Makefile $(srcdir)/users_guide.in
 	rm -f users_guide users_guide.tmp; \
 	$(auto_edit) $(srcdir)/users_guide.in >users_guide.tmp; \
 	mv users_guide.tmp users_guide
+
+# Test target - runs basic functionality tests
+test: all
+	@echo "Running basic functionality tests..."
+	@echo "Testing tac_pwd with different hash methods:"
+	@echo "test" | ./tac_pwd -m md5 | grep -q '$$1$$md' && echo "  MD5: PASS" || echo "  MD5: FAIL"
+	@echo "test" | ./tac_pwd -m bcrypt | grep -q '$$1$$bc' && echo "  bcrypt: PASS" || echo "  bcrypt: FAIL"
+	@echo "test" | ./tac_pwd -m argon2id | grep -q '$$1$$ar' && echo "  argon2id: PASS" || echo "  argon2id: FAIL"
+	@echo "Testing tac_plus binary:"
+	@./tac_plus -v >/dev/null 2>&1 || test $$? -eq 1 && echo "  tac_plus version: PASS" || echo "  tac_plus version: FAIL"
+	@echo "All tests completed."
+
+# Pedantic target - builds with -pedantic flag
+pedantic: clean
+	@echo "Building with -pedantic flag..."
+	$(MAKE) CFLAGS="$(CFLAGS) -pedantic" all

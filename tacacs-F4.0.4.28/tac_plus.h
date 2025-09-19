@@ -39,14 +39,20 @@
 #endif
 #include <errno.h>
 #include <netdb.h>
-#include <pwd.h>
+#ifdef HAVE_PWD_H
+# include <pwd.h>
+#endif
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdio.h>
-#include <sys/ioctl.h>
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
 #include <sys/stat.h>
-#include <sys/file.h>
+#ifdef HAVE_SYS_FILE_H
+# include <sys/file.h>
+#endif
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
 # include <time.h>
@@ -221,6 +227,15 @@ extern struct timeval started_at;
 extern char *wtmpfile;
 extern int wtmpfd;
 
+/* TLS configuration variables */
+extern char *tls_cert_path;
+extern char *tls_key_path;
+extern char *tls_ca_path;
+extern int tls_port;
+
+/* TLS port configuration function */
+void set_tls_port(int port);
+
 #define HASH_TAB_SIZE 65539        /* user and group hash table sizes */
 
 struct acct {
@@ -381,7 +396,7 @@ void remove_client_entry(char*);
 void remove_proc_entry(char*);
 void create_proc_client_map(pid_t, char*);
 void delete_proc_client_map(pid_t);
-void dump_client_tables();
+void dump_client_tables(void);
 
 struct client_st {
     char *name;     /* host name */

@@ -23,7 +23,9 @@
 /* Routines to fork children and communicate with them via pipes */
 
 #include "tac_plus.h"
-#include <sys/wait.h>
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>
+#endif
 #ifdef HAVE_CTYPE_H
 # include <ctype.h>
 #endif

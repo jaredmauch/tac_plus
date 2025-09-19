@@ -21,7 +21,9 @@
  */
 
 #include "tac_plus.h"
-#include <regex.h>
+#ifdef HAVE_REGEX_H
+# include <regex.h>
+#endif
 #ifndef REG_OK
 # ifdef REG_NOERROR
 #  define REG_OK REG_NOERROR

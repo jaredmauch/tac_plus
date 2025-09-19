@@ -2,22 +2,21 @@
 .hys 50
 .TH "tac_pwd" "8" "23 March 2012"
 .SH NAME
-tac_pwd \- generate DES or MD5 encryption of a password
+tac_pwd \- generate password hashes for various algorithms
 .\"
 .SH SYNOPSIS
 .B tac_pwd
-[\fB\-ehm\fP]
-[\c
+[\fB\-ehmbap\fP] [\fB\-s\fP \fI256|512\fP] [\c
 salt]
 .\"
 .SH DESCRIPTION
 .B tac_pwd 
-prompts for a clear-text password and produces a DES encryption of that
+prompts for a clear-text password and produces a hash of that
 password on stdout which may be used in lieu of the clear-text representation
 in the
 .BR tac_plus.conf (5).
 .PP
-The DES salt may be provided as a command-line argument.
+The salt may be provided as a command-line argument for algorithms that support it.
 .PP
 .SH COMMAND-LINE OPTIONS
 .TP
@@ -32,6 +31,26 @@ Display help message.
 .B \-m
 Generate an MD5 encryption, instead of DES.
 This only works if crypt() on your host supports MD5.
+.\"
+.TP
+.B \-b
+Generate a bcrypt hash. Requires libbcrypt.
+.\"
+.TP
+.B \-a
+Generate an Argon2 hash. Requires libargon2.
+.\"
+.TP
+.B \-p
+Generate a PBKDF2 hash. Requires OpenSSL/libcrypto.
+.\"
+.TP
+.B \-s 256
+Generate a SHA-256 crypt hash. Requires OpenSSL/libcrypto.
+.\"
+.TP
+.B \-s 512
+Generate a SHA-512 crypt hash. Requires OpenSSL/libcrypto.
 .\"
 .SH "SEE ALSO"
 .BR crypt (3),

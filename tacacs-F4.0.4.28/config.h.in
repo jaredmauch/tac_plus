@@ -21,11 +21,38 @@
    guide for more details) */
 #undef ARAP_DES
 
+/* Shell used by config.status */
+#undef CONFIG_SHELL
+
 /* define this to include debugging support */
 #undef DBG
 
+/* define this to enable debug-only secret logging */
+#undef DEBUG_SECRET_LOGGING
+
+/* define this to enable ASCII authentication (disabled by default for
+   security) */
+#undef ENABLE_ASCII
+
+/* define this to enable PAP authentication (disabled by default for security)
+   */
+#undef ENABLE_PAP
+
+/* define this to enable SENDPASS support (disabled by default for security)
+   */
+#undef ENABLE_SENDPASS
+
 /* define this if your o/s is FreeBSD */
 #undef FREEBSD
+
+/* Define to 1 if you have the <acexport.h> header file. */
+#undef HAVE_ACEXPORT_H
+
+/* define if your system crypt() supports bcrypt */
+#undef HAVE_BCRYPT
+
+/* Define to 1 if you have the 'crypt' function. */
+#undef HAVE_CRYPT
 
 /* Define to 1 if you have the <crypt.h> header file. */
 #undef HAVE_CRYPT_H
@@ -45,8 +72,14 @@
 /* Define to 1 if you have the 'getdtablesize' function. */
 #undef HAVE_GETDTABLESIZE
 
+/* Define to 1 if you have the <grp.h> header file. */
+#undef HAVE_GRP_H
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* define if your system has libsodium */
+#undef HAVE_LIBSODIUM
 
 /* */
 #undef HAVE_LIBWRAP
@@ -60,23 +93,41 @@
 /* Define to 1 if you have the 'memset' function. */
 #undef HAVE_MEMSET
 
+/* Define to 1 if you have the <netinet/tcp.h> header file. */
+#undef HAVE_NETINET_TCP_H
+
 /* define if your system has libpam */
 #undef HAVE_PAM
 
 /* Define to 1 if the system has the type 'pid_t'. */
 #undef HAVE_PID_T
 
+/* Define to 1 if you have the <poll.h> header file. */
+#undef HAVE_POLL_H
+
 /* Define if you have POSIX threads libraries and header files. */
 #undef HAVE_PTHREAD
+
+/* Define to 1 if you have the <pwd.h> header file. */
+#undef HAVE_PWD_H
 
 /* Define to 1 if you have the 'random' function. */
 #undef HAVE_RANDOM
 
+/* Define to 1 if you have the <regex.h> header file. */
+#undef HAVE_REGEX_H
+
 /* Define to 1 if you have the <shadow.h> header file. */
 #undef HAVE_SHADOW_H
 
+/* Define to 1 if you have the <skey.h> header file. */
+#undef HAVE_SKEY_H
+
 /* Define to 1 if the system has the type 'socklen_t'. */
 #undef HAVE_SOCKLEN_T
+
+/* Define to 1 if you have the <sodium.h> header file. */
+#undef HAVE_SODIUM_H
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
@@ -114,6 +165,12 @@
 /* Define to 1 if you have the <syslog.h> header file. */
 #undef HAVE_SYSLOG_H
 
+/* Define to 1 if you have the <sys/file.h> header file. */
+#undef HAVE_SYS_FILE_H
+
+/* Define to 1 if you have the <sys/ioctl.h> header file. */
+#undef HAVE_SYS_IOCTL_H
+
 /* Define to 1 if you have the <sys/resource.h> header file. */
 #undef HAVE_SYS_RESOURCE_H
 
@@ -135,6 +192,9 @@
 /* Define to 1 if you have the <termios.h> header file. */
 #undef HAVE_TERMIOS_H
 
+/* define this if TLS support is available */
+#undef HAVE_TLS
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
@@ -143,6 +203,9 @@
 
 /* Define to 1 if you have the <utmp.h> header file. */
 #undef HAVE_UTMP_H
+
+/* Define to 1 if you have the <varargs.h> header file. */
+#undef HAVE_VARARGS_H
 
 /* Define to 1 if you have the 'wait3' function. */
 #undef HAVE_WAIT3
@@ -258,6 +321,21 @@
 
 /* define this to a UID for setuid() at run-time */
 #undef TACPLUS_USERID
+
+/* Path to TLS CA certificate */
+#undef TLS_CA_PATH
+
+/* Path to TLS server certificate */
+#undef TLS_CERT_PATH
+
+/* Path to TLS server private key */
+#undef TLS_KEY_PATH
+
+/* TLS port number */
+#undef TLS_PORT
+
+/* define this to use same port for TLS and legacy */
+#undef TLS_SAME_PORT
 
 /* define this to include user-specific enable password support */
 #undef UENABLE

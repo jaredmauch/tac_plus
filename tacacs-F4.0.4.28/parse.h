@@ -98,3 +98,8 @@
 #define S_writetimeout 55
 #define S_accepttimeout 56
 #define S_logauthor 57
+#define S_tls 58
+#define S_tls_cert 59
+#define S_tls_key 60
+#define S_tls_ca 61
+#define S_tls_port 62

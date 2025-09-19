@@ -25,11 +25,21 @@
 
 #include "version.h"
 #include "tac_plus.h"
-#include <grp.h>
-#include <netinet/tcp.h>
-#include <poll.h>
-#include <pwd.h>
-#include <sys/wait.h>
+#ifdef HAVE_GRP_H
+# include <grp.h>
+#endif
+#ifdef HAVE_NETINET_TCP_H
+# include <netinet/tcp.h>
+#endif
+#ifdef HAVE_POLL_H
+# include <poll.h>
+#endif
+#ifdef HAVE_PWD_H
+# include <pwd.h>
+#endif
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>
+#endif
 #include <signal.h>
 
 #ifdef LIBWRAP
@@ -47,7 +57,97 @@ int debug;			/* debugging flags */
 int facility = LOG_DAEMON;	/* syslog facility */
 int port = TAC_PLUS_PORT;	/* port we're listening on */
 char *portstr = TAC_PLUS_PORTSTR;
-int console;			/* write all syslog messages to console */
+int console;
+
+/* TLS socket support */
+static int *tls_sockets = NULL;	/* TLS socket array */
+static int tls_nsockets = 0;	/* number of TLS sockets */
+int tls_port = 0;	/* TLS port number - will be set from config */
+
+/* Global pollfd array for cleanup */
+static struct pollfd *pfds = NULL;
+
+/* File monitoring for certificate reloading */
+static time_t cert_mtime = 0;
+static time_t key_mtime = 0;
+static time_t ca_mtime = 0;
+
+/* Set TLS port from configuration */
+void
+set_tls_port(int port)
+{
+    tls_port = port;
+}
+
+/* Clean up pollfd array */
+void
+cfg_cleanup_pollfd(void)
+{
+    if (pfds) {
+	free(pfds);
+	pfds = NULL;
+    }
+}
+
+/*
+ * Check if certificate files have been modified and need reloading
+ */
+static int
+check_certificate_files(void)
+{
+#ifdef HAVE_TLS
+    struct stat cert_stat, key_stat, ca_stat;
+    int reload_needed = 0;
+    
+    if (tls_port <= 0) {
+	return 0; /* TLS not enabled */
+    }
+    
+    /* Get certificate paths from configuration or use defaults */
+    const char *cert_path = tls_cert_path ? tls_cert_path : TLS_CERT_PATH;
+    const char *key_path = tls_key_path ? tls_key_path : TLS_KEY_PATH;
+    const char *ca_path = tls_ca_path ? tls_ca_path : TLS_CA_PATH;
+    
+    /* Check server certificate */
+    if (stat(cert_path, &cert_stat) == 0) {
+	if (cert_stat.st_mtime > cert_mtime) {
+	    cert_mtime = cert_stat.st_mtime;
+	    reload_needed = 1;
+	    report(LOG_INFO, "Server certificate file modified: %s", cert_path);
+	}
+    }
+    
+    /* Check server private key */
+    if (stat(key_path, &key_stat) == 0) {
+	if (key_stat.st_mtime > key_mtime) {
+	    key_mtime = key_stat.st_mtime;
+	    reload_needed = 1;
+	    report(LOG_INFO, "Server private key file modified: %s", key_path);
+	}
+    }
+    
+    /* Check CA certificate */
+    if (stat(ca_path, &ca_stat) == 0) {
+	if (ca_stat.st_mtime > ca_mtime) {
+	    ca_mtime = ca_stat.st_mtime;
+	    reload_needed = 1;
+	    report(LOG_INFO, "CA certificate file modified: %s", ca_path);
+	}
+    }
+    
+    if (reload_needed) {
+	report(LOG_INFO, "Certificate files modified, reloading TLS configuration");
+	if (tls_reload() != 0) {
+	    report(LOG_ERR, "Failed to reload TLS configuration after certificate change");
+	    return -1;
+	}
+    }
+    
+    return 0;
+#else
+    return 0; /* TLS not compiled in */
+#endif
+}
 int parse_only;			/* exit after verbose parsing */
 int lookup_peer;		/* look-up peer names from addresses */
 #if HAVE_PID_T
@@ -77,7 +177,7 @@ static char pidfilebuf[PIDSZ]; /* holds current name of the pidfile */
 static char msgbuf[MSGBUFSZ];
 
 static RETSIGTYPE die(int);
-static int get_socket(int **, int *);
+static int get_socket(int **, int *, const char *);
 static int init(void);
 #if defined(REAPCHILD) && defined(REAPSIGIGN)
 static RETSIGTYPE reapchild(int);
@@ -92,14 +192,25 @@ die(int signum)
     report(LOG_NOTICE, "Received signal %d, shutting down", signum);
     if (childpid > 0)
 	unlink(pidfilebuf);
+    
+#ifdef HAVE_TLS
+    tls_cleanup();
+#endif
+    
     tac_exit(0);
 }
 
 static int
 init(void)
 {
-    if (initialised)
+    if (initialised) {
 	cfg_clean_config();
+	
+	/* Clean up TLS before reinitializing */
+#ifdef HAVE_TLS
+	tls_cleanup();
+#endif
+    }
 
     report(LOG_NOTICE, "Reading config");
 
@@ -116,6 +227,17 @@ init(void)
 
     if (session.acctfile == NULL && !(session.flags & SESS_FLAG_ACCTSYSL))
 	session.acctfile = tac_strdup(TACPLUS_ACCTFILE);
+
+    /* Reload TLS configuration if TLS is enabled */
+#ifdef HAVE_TLS
+    if (tls_port > 0) {
+	if (tls_reload() != 0) {
+	    report(LOG_WARNING, "Failed to reload TLS configuration, TLS may not be available");
+	} else {
+	    report(LOG_INFO, "TLS configuration reloaded successfully");
+	}
+    }
+#endif
 
     initialised++;
     reinitialize = 0;
@@ -155,7 +277,7 @@ reapchild(int notused)
 }
 #endif
 void
-reapchildren()
+reapchildren(void)
 {
 #ifdef UNIONWAIT
   union wait status;
@@ -186,7 +308,7 @@ reapchildren()
  * the program on failure.
  */
 static int
-get_socket(int **sa, int *nsa)
+get_socket(int **sa, int *nsa, const char *port_str)
 {
     char	host[NI_MAXHOST], serv[NI_MAXHOST];
     struct addrinfo hint, *res, *rp;
@@ -204,9 +326,9 @@ get_socket(int **sa, int *nsa)
     hint.ai_flags |= AI_ADDRCONFIG;
 #endif
     if (bind_address)
-	ecode = getaddrinfo(bind_address, portstr, &hint, &res);
+	ecode = getaddrinfo(bind_address, port_str, &hint, &res);
     else
-	ecode = getaddrinfo(NULL, portstr, &hint, &res);
+	ecode = getaddrinfo(NULL, port_str, &hint, &res);
     if (ecode != 0) {
 	report(LOG_ERR, "getaddrinfo: %s\n", gai_strerror(ecode));
 	tac_exit(1);
@@ -279,6 +401,35 @@ get_socket(int **sa, int *nsa)
     }
 
     return(0);
+}
+
+/*
+ * Initialize TLS sockets if TLS is enabled
+ */
+static void
+init_tls_sockets(void)
+{
+#ifdef HAVE_TLS
+    char tls_port_str[16];
+    
+    /* Get TLS port from config or use default */
+    if (tls_port > 0) {
+	snprintf(tls_port_str, sizeof(tls_port_str), "%d", tls_port);
+	report(LOG_INFO, "Initializing TLS sockets on port %s", tls_port_str);
+	
+	if (get_socket(&tls_sockets, &tls_nsockets, tls_port_str) != 0) {
+	    report(LOG_ERR, "Failed to create TLS sockets");
+	    tls_sockets = NULL;
+	    tls_nsockets = 0;
+	} else {
+	    report(LOG_INFO, "TLS sockets initialized: %d sockets", tls_nsockets);
+	}
+    } else {
+	report(LOG_DEBUG, "TLS port not configured, TLS sockets disabled");
+    }
+#else
+    report(LOG_DEBUG, "TLS support not compiled in");
+#endif
 }
 
 void
@@ -539,13 +690,35 @@ main(int argc, char **argv)
     umask(022);
     errno = 0;
 
-    get_socket(&s, &ns);
+    get_socket(&s, &ns, portstr);
+    
+    /* Initialize TLS if enabled */
+#ifdef HAVE_TLS
+    if (tls_init() != 0) {
+	report(LOG_ERR, "Failed to initialize TLS support");
+	tac_exit(1);
+    }
+#endif
+
+    /* Initialize TLS sockets if enabled */
+    init_tls_sockets();
 
     for (c = 0; c < ns; c++) {
 	if (listen(s[c], somaxconn) < 0) {
 	    console = 1;
 	    report(LOG_ERR, "listen: %s", strerror(errno));
 	    tac_exit(1);
+	}
+    }
+    
+    /* Listen on TLS sockets if enabled */
+    if (tls_sockets && tls_nsockets > 0) {
+	for (c = 0; c < tls_nsockets; c++) {
+	    if (listen(tls_sockets[c], somaxconn) < 0) {
+		console = 1;
+		report(LOG_ERR, "TLS listen: %s", strerror(errno));
+		tac_exit(1);
+	    }
 	}
     }
 
@@ -626,14 +799,28 @@ main(int argc, char **argv)
     report(LOG_DEBUG, "uid=%d euid=%d gid=%d egid=%d s=%d",
 	   getuid(), geteuid(), getgid(), getegid(), s);
 
-    pfds = malloc(sizeof(struct pollfd) * ns);
+    /* Allocate pollfd array for both regular and TLS sockets */
+    int total_sockets = ns + tls_nsockets;
+    if (pfds) {
+	free(pfds);
+	pfds = NULL;
+    }
+    pfds = malloc(sizeof(struct pollfd) * total_sockets);
     if (pfds == NULL) {
 	report(LOG_ERR, "malloc failure: %s", strerror(errno));
 	tac_exit(1);
     }
+    
+    /* Add regular sockets to pollfd array */
     for (c = 0; c < ns; c++) {
 	pfds[c].fd = s[c];
 	pfds[c].events = POLLIN | POLLERR | POLLHUP | POLLNVAL;
+    }
+    
+    /* Add TLS sockets to pollfd array */
+    for (c = 0; c < tls_nsockets; c++) {
+	pfds[ns + c].fd = tls_sockets[c];
+	pfds[ns + c].events = POLLIN | POLLERR | POLLHUP | POLLNVAL;
     }
 
     for (;;) {
@@ -657,13 +844,16 @@ main(int argc, char **argv)
 	if (reinitialize)
 	    init();
 
+	/* Check for certificate file changes */
+	check_certificate_files();
+
   if (dump_client_table) {
     report(LOG_ALERT, "Dumping Client Tables");
     dump_client_tables();
     dump_client_table = 0;
   }
 
-	status = poll(pfds, ns, TAC_PLUS_ACCEPT_TIMEOUT * 1000);
+	status = poll(pfds, total_sockets, TAC_PLUS_ACCEPT_TIMEOUT * 1000);
 	if (status == 0)
 	    continue;
 	if (status == -1)
@@ -671,16 +861,30 @@ main(int argc, char **argv)
 		continue;
 
 	memset((char *)&from, 0, sizeof(from));
-	for (c = 0; c < ns; c++) {
-	    if (pfds[c].revents & POLLIN)
+	int is_tls_connection = 0;
+	
+	for (c = 0; c < total_sockets; c++) {
+	    if (pfds[c].revents & POLLIN) {
+		if (c < ns) {
+		    /* Regular socket */
 		    newsockfd = accept(s[c], (struct sockaddr *)&from, &from_len);
+		    is_tls_connection = 0;
+		} else {
+		    /* TLS socket */
+		    newsockfd = accept(tls_sockets[c - ns], (struct sockaddr *)&from, &from_len);
+		    is_tls_connection = 1;
+		}
         /* New connection, break out of for loop to fork, avoids
            accepting 2 connections then forking, leaving one stranded */
         if (newsockfd >= 0)
           break;
-	    else if (pfds[c].revents & (POLLERR | POLLHUP | POLLNVAL)) {
-		      report(LOG_ERR, "exception on listen FD %d", s[c]);
-		      tac_exit(1);
+	    } else if (pfds[c].revents & (POLLERR | POLLHUP | POLLNVAL)) {
+		if (c < ns) {
+		    report(LOG_ERR, "exception on listen FD %d", s[c]);
+		} else {
+		    report(LOG_ERR, "exception on TLS listen FD %d", tls_sockets[c - ns]);
+		}
+		tac_exit(1);
 	    }
 	}
 
@@ -708,8 +912,26 @@ main(int argc, char **argv)
 	session.peerip = tac_strdup((char *)host);
 
 	if (debug & DEBUG_PACKET_FLAG)
-	    report(LOG_DEBUG, "session request from %s sock=%d",
-		   session.peer, newsockfd);
+	    report(LOG_DEBUG, "session request from %s sock=%d (TLS: %s)",
+		   session.peer, newsockfd, is_tls_connection ? "yes" : "no");
+
+	/* Handle TLS handshake if this is a TLS connection */
+	if (is_tls_connection) {
+#ifdef HAVE_TLS
+	    if (tls_accept(newsockfd) != 0) {
+		report(LOG_ERR, "TLS handshake failed for %s", session.peer);
+		shutdown(newsockfd, 2);
+		close(newsockfd);
+		continue;
+	    }
+	    report(LOG_INFO, "TLS connection established with %s", session.peer);
+#else
+	    report(LOG_ERR, "TLS connection attempted but TLS not compiled in");
+	    shutdown(newsockfd, 2);
+	    close(newsockfd);
+	    continue;
+#endif
+	}
 
 	if (!single) {
 #if defined(REAPCHILD) && defined(REAPSIGIGN)
@@ -770,6 +992,9 @@ main(int argc, char **argv)
 #endif
 
 	    start_session();
+#ifdef HAVE_TLS
+	    tls_close();
+#endif
 	    shutdown(session.sock, 2);
 	    close(session.sock);
 	    if (!single)

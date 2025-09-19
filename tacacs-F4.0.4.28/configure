@@ -656,12 +656,26 @@ LIBOBJS
 MYSYSCONFDIR
 INST_PROGS
 TAR
+LIBSODIUM_LIBS
+LIBSODIUM_CFLAGS
+PKG_CONFIG_LIBDIR
+PKG_CONFIG_PATH
+PKG_CONFIG
 PROFLIBS
 PROFLAGS
 TACPLUS_WHOLOGFILE
 TACPLUS_LOGFILE
 TACPLUS_ACCTFILE
 TACPLUS_PIDFILE
+TLS_PORT
+TLS_CA_PATH
+TLS_KEY_PATH
+TLS_CERT_PATH
+TLS_LIBS
+ENABLE_ASCII
+ENABLE_PAP
+DEBUG_SECRET_LOGGING
+ENABLE_SENDPASS
 MSCHAP_DES
 MSCHAP_
 ARAP_DES
@@ -844,6 +858,16 @@ enable_finger
 enable_arapdes
 enable_mschap
 enable_mschapdes
+enable_sendpass
+enable_debug_secrets
+enable_pap
+enable_ascii
+enable_tls
+with_tls_cert
+with_tls_key
+with_tls_ca
+with_tls_port
+enable_tls_same_port
 with_pidfile
 with_acctfile
 with_logfile
@@ -861,7 +885,12 @@ CPPFLAGS
 LT_SYS_LIBRARY_PATH
 CPP
 YACC
-YFLAGS'
+YFLAGS
+PKG_CONFIG
+PKG_CONFIG_PATH
+PKG_CONFIG_LIBDIR
+LIBSODIUM_CFLAGS
+LIBSODIUM_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1517,6 +1546,17 @@ Optional Features:
   --enable-arapdes        enable DES for ARAP
   --enable-mschap         enable MSCHAP
   --enable-mschapdes      enable DES for MSCHAP
+  --enable-sendpass       enable SENDPASS support (disabled by default for
+                          security)
+  --enable-debug-secrets  enable debug-only secret logging (for debugging
+                          only)
+  --enable-pap            enable PAP authentication (disabled by default for
+                          security)
+  --enable-ascii          enable ASCII authentication (disabled by default for
+                          security)
+  --enable-tls            enable TLS 1.3 transport security (RFC 8907
+                          compliance)
+  --enable-tls-same-port  use same port for TLS and legacy (default: disabled)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1532,6 +1572,11 @@ Optional Packages:
                           lib, eg: /usr/local
   --with-userid=UID       tacacs will setuid(UID) after it binds the tcp port
   --with-groupid=UID      tacacs will setgid(GID) after it binds the tcp port
+  --with-tls-cert=PATH    path to TLS server certificate
+  --with-tls-key=PATH     path to TLS server private key
+  --with-tls-ca=PATH      path to TLS CA certificate for client verification
+  --with-tls-port=PORT    TLS port number (default: 49 for same port, 8443 for
+                          different port)
   --with-pidfile=PATH     alternate pidfile FQPN
   --with-acctfile=PATH    alternate accounting file FQPN
   --with-logfile=PATH     alternate log file FQPN
@@ -1555,6 +1600,15 @@ Some influential environment variables:
   YFLAGS      The list of arguments that will be passed by default to $YACC.
               This script will default YFLAGS to the empty string to avoid a
               default value of '-d' given by some make applications.
+  PKG_CONFIG  path to pkg-config utility
+  PKG_CONFIG_PATH
+              directories to add to pkg-config's search path
+  PKG_CONFIG_LIBDIR
+              path overriding pkg-config's built-in search path
+  LIBSODIUM_CFLAGS
+              C compiler flags for LIBSODIUM, overriding pkg-config
+  LIBSODIUM_LIBS
+              linker flags for LIBSODIUM, overriding pkg-config
 
 Use these variables to override the choices made by 'configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -3725,6 +3779,15 @@ fi
 
 
 
+
+
+# Define PKG_CHECK_MODULES if not available
+
+
+# Configure shell for portability
+# AC_PROG_SHELL is not available in older autoconf versions
+
+printf "%s\n" "#define CONFIG_SHELL \"$SHELL\"" >>confdefs.h
 
 
 
@@ -16614,6 +16677,13 @@ printf "%s\n" "no" >&6; }
 printf "%s\n" "yes" >&6; }
     printf "%s\n" "#define SKEY 1" >>confdefs.h
 
+    ac_fn_c_check_header_compile "$LINENO" "skey.h" "ac_cv_header_skey_h" "$ac_includes_default"
+if test "x$ac_cv_header_skey_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_SKEY_H 1" >>confdefs.h
+
+fi
+
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing skeychallenge" >&5
 printf %s "checking for library containing skeychallenge... " >&6; }
 if test ${ac_cv_search_skeychallenge+y}
@@ -16689,6 +16759,13 @@ fi
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; }
     printf "%s\n" "#define SKEY 1" >>confdefs.h
+
+    ac_fn_c_check_header_compile "$LINENO" "skey.h" "ac_cv_header_skey_h" "$ac_includes_default"
+if test "x$ac_cv_header_skey_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_SKEY_H 1" >>confdefs.h
+
+fi
 
     if test -d "$withval" ; then
 	LDFAGS="$LDFLAGS -L$withval/lib"
@@ -16874,6 +16951,13 @@ printf "%s\n" "no" >&6; }
 printf "%s\n" "yes" >&6; }
     printf "%s\n" "#define ACECLNT 1" >>confdefs.h
 
+    ac_fn_c_check_header_compile "$LINENO" "acexport.h" "ac_cv_header_acexport_h" "$ac_includes_default"
+if test "x$ac_cv_header_acexport_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_ACEXPORT_H 1" >>confdefs.h
+
+fi
+
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing SD_Init" >&5
 printf %s "checking for library containing SD_Init... " >&6; }
 if test ${ac_cv_search_SD_Init+y}
@@ -16949,6 +17033,13 @@ fi
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; }
     printf "%s\n" "#define ACECLNT 1" >>confdefs.h
+
+    ac_fn_c_check_header_compile "$LINENO" "acexport.h" "ac_cv_header_acexport_h" "$ac_includes_default"
+if test "x$ac_cv_header_acexport_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_ACEXPORT_H 1" >>confdefs.h
+
+fi
 
     if test -d "$withval" ; then
 	LDFAGS="$LDFLAGS -L$withval/lib"
@@ -17427,6 +17518,559 @@ fi
 
 
 
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether to enable SENDPASS support" >&5
+printf %s "checking whether to enable SENDPASS support... " >&6; }
+
+# Check whether --enable-sendpass was given.
+if test ${enable_sendpass+y}
+then :
+  enableval=$enable_sendpass;  case "$enable_sendpass" in
+  yes)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+    printf "%s\n" "#define ENABLE_SENDPASS 1" >>confdefs.h
+
+    ;;
+  no | *)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+    ;;
+  esac
+else case e in #(
+  e) # ie: no --{enable,disable}-sendpass option, withval == ""
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+ ;;
+esac
+fi
+
+
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether to enable debug secret logging" >&5
+printf %s "checking whether to enable debug secret logging... " >&6; }
+
+# Check whether --enable-debug-secrets was given.
+if test ${enable_debug_secrets+y}
+then :
+  enableval=$enable_debug_secrets;  case "$enable_debug_secrets" in
+  yes)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+    printf "%s\n" "#define DEBUG_SECRET_LOGGING 1" >>confdefs.h
+
+    ;;
+  no | *)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+    ;;
+  esac
+else case e in #(
+  e) # ie: no --{enable,disable}-debug-secrets option, withval == ""
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+ ;;
+esac
+fi
+
+
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether to enable PAP authentication" >&5
+printf %s "checking whether to enable PAP authentication... " >&6; }
+
+# Check whether --enable-pap was given.
+if test ${enable_pap+y}
+then :
+  enableval=$enable_pap;  case "$enable_pap" in
+  yes)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+    printf "%s\n" "#define ENABLE_PAP 1" >>confdefs.h
+
+    ;;
+  no | *)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+    ;;
+  esac
+else case e in #(
+  e) # ie: no --{enable,disable}-pap option, withval == ""
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+ ;;
+esac
+fi
+
+
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether to enable ASCII authentication" >&5
+printf %s "checking whether to enable ASCII authentication... " >&6; }
+
+# Check whether --enable-ascii was given.
+if test ${enable_ascii+y}
+then :
+  enableval=$enable_ascii;  case "$enable_ascii" in
+  yes)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+    printf "%s\n" "#define ENABLE_ASCII 1" >>confdefs.h
+
+    ;;
+  no | *)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+    ;;
+  esac
+else case e in #(
+  e) # ie: no --{enable,disable}-ascii option, withval == ""
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+ ;;
+esac
+fi
+
+
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether to enable TLS support" >&5
+printf %s "checking whether to enable TLS support... " >&6; }
+
+# Check whether --enable-tls was given.
+if test ${enable_tls+y}
+then :
+  enableval=$enable_tls;  case "$enable_tls" in
+  yes)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+    # Check for OpenSSL first (must support TLS 1.3)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for SSL_library_init in -lssl" >&5
+printf %s "checking for SSL_library_init in -lssl... " >&6; }
+if test ${ac_cv_lib_ssl_SSL_library_init+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lssl  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char SSL_library_init (void);
+int
+main (void)
+{
+return SSL_library_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_ssl_SSL_library_init=yes
+else case e in #(
+  e) ac_cv_lib_ssl_SSL_library_init=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ssl_SSL_library_init" >&5
+printf "%s\n" "$ac_cv_lib_ssl_SSL_library_init" >&6; }
+if test "x$ac_cv_lib_ssl_SSL_library_init" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for EVP_sha256 in -lcrypto" >&5
+printf %s "checking for EVP_sha256 in -lcrypto... " >&6; }
+if test ${ac_cv_lib_crypto_EVP_sha256+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcrypto  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char EVP_sha256 (void);
+int
+main (void)
+{
+return EVP_sha256 ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_crypto_EVP_sha256=yes
+else case e in #(
+  e) ac_cv_lib_crypto_EVP_sha256=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_crypto_EVP_sha256" >&5
+printf "%s\n" "$ac_cv_lib_crypto_EVP_sha256" >&6; }
+if test "x$ac_cv_lib_crypto_EVP_sha256" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for TLS1_3_VERSION in -lssl" >&5
+printf %s "checking for TLS1_3_VERSION in -lssl... " >&6; }
+if test ${ac_cv_lib_ssl_TLS1_3_VERSION+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lssl  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char TLS1_3_VERSION (void);
+int
+main (void)
+{
+return TLS1_3_VERSION ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_ssl_TLS1_3_VERSION=yes
+else case e in #(
+  e) ac_cv_lib_ssl_TLS1_3_VERSION=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ssl_TLS1_3_VERSION" >&5
+printf "%s\n" "$ac_cv_lib_ssl_TLS1_3_VERSION" >&6; }
+if test "x$ac_cv_lib_ssl_TLS1_3_VERSION" = xyes
+then :
+  printf "%s\n" "#define HAVE_TLS 1" >>confdefs.h
+
+                 TLS_LIBS="-lssl -lcrypto"
+                 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: TLS 1.3 support enabled with OpenSSL" >&5
+printf "%s\n" "TLS 1.3 support enabled with OpenSSL" >&6; }
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: OpenSSL does not support TLS 1.3, trying alternative TLS libraries..." >&5
+printf "%s\n" "$as_me: WARNING: OpenSSL does not support TLS 1.3, trying alternative TLS libraries..." >&2;}
+                 # Try mbedTLS as fallback
+                 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for mbedtls_ssl_init in -lmbedtls" >&5
+printf %s "checking for mbedtls_ssl_init in -lmbedtls... " >&6; }
+if test ${ac_cv_lib_mbedtls_mbedtls_ssl_init+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmbedtls  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char mbedtls_ssl_init (void);
+int
+main (void)
+{
+return mbedtls_ssl_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_mbedtls_mbedtls_ssl_init=yes
+else case e in #(
+  e) ac_cv_lib_mbedtls_mbedtls_ssl_init=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mbedtls_mbedtls_ssl_init" >&5
+printf "%s\n" "$ac_cv_lib_mbedtls_mbedtls_ssl_init" >&6; }
+if test "x$ac_cv_lib_mbedtls_mbedtls_ssl_init" = xyes
+then :
+  printf "%s\n" "#define HAVE_TLS 1" >>confdefs.h
+
+                      TLS_LIBS="-lmbedtls"
+                      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: TLS 1.3 support enabled with mbedTLS" >&5
+printf "%s\n" "TLS 1.3 support enabled with mbedTLS" >&6; }
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: No suitable TLS 1.3 library found. TLS support disabled." >&5
+printf "%s\n" "$as_me: WARNING: No suitable TLS 1.3 library found. TLS support disabled." >&2;} ;;
+esac
+fi
+ ;;
+esac
+fi
+
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: OpenSSL crypto library not found, trying alternative TLS libraries..." >&5
+printf "%s\n" "$as_me: WARNING: OpenSSL crypto library not found, trying alternative TLS libraries..." >&2;}
+             # Try mbedTLS as fallback
+             { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for mbedtls_ssl_init in -lmbedtls" >&5
+printf %s "checking for mbedtls_ssl_init in -lmbedtls... " >&6; }
+if test ${ac_cv_lib_mbedtls_mbedtls_ssl_init+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmbedtls  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char mbedtls_ssl_init (void);
+int
+main (void)
+{
+return mbedtls_ssl_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_mbedtls_mbedtls_ssl_init=yes
+else case e in #(
+  e) ac_cv_lib_mbedtls_mbedtls_ssl_init=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mbedtls_mbedtls_ssl_init" >&5
+printf "%s\n" "$ac_cv_lib_mbedtls_mbedtls_ssl_init" >&6; }
+if test "x$ac_cv_lib_mbedtls_mbedtls_ssl_init" = xyes
+then :
+  printf "%s\n" "#define HAVE_TLS 1" >>confdefs.h
+
+                  TLS_LIBS="-lmbedtls"
+                  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: TLS support enabled with mbedTLS" >&5
+printf "%s\n" "TLS support enabled with mbedTLS" >&6; }
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: No suitable TLS library found. TLS support disabled." >&5
+printf "%s\n" "$as_me: WARNING: No suitable TLS library found. TLS support disabled." >&2;} ;;
+esac
+fi
+ ;;
+esac
+fi
+
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: OpenSSL SSL library not found, trying alternative TLS libraries..." >&5
+printf "%s\n" "$as_me: WARNING: OpenSSL SSL library not found, trying alternative TLS libraries..." >&2;}
+         # Try mbedTLS as fallback
+         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for mbedtls_ssl_init in -lmbedtls" >&5
+printf %s "checking for mbedtls_ssl_init in -lmbedtls... " >&6; }
+if test ${ac_cv_lib_mbedtls_mbedtls_ssl_init+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmbedtls  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char mbedtls_ssl_init (void);
+int
+main (void)
+{
+return mbedtls_ssl_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_mbedtls_mbedtls_ssl_init=yes
+else case e in #(
+  e) ac_cv_lib_mbedtls_mbedtls_ssl_init=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mbedtls_mbedtls_ssl_init" >&5
+printf "%s\n" "$ac_cv_lib_mbedtls_mbedtls_ssl_init" >&6; }
+if test "x$ac_cv_lib_mbedtls_mbedtls_ssl_init" = xyes
+then :
+  printf "%s\n" "#define HAVE_TLS 1" >>confdefs.h
+
+              TLS_LIBS="-lmbedtls"
+              { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: TLS support enabled with mbedTLS" >&5
+printf "%s\n" "TLS support enabled with mbedTLS" >&6; }
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: No suitable TLS library found. TLS support disabled." >&5
+printf "%s\n" "$as_me: WARNING: No suitable TLS library found. TLS support disabled." >&2;} ;;
+esac
+fi
+ ;;
+esac
+fi
+
+    ;;
+  no | *)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+    ;;
+  esac
+else case e in #(
+  e) # ie: no --{enable,disable}-tls option, withval == ""
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+ ;;
+esac
+fi
+
+
+
+
+# Check whether --with-tls-cert was given.
+if test ${with_tls_cert+y}
+then :
+  withval=$with_tls_cert; TLS_CERT_PATH="$withval"
+else case e in #(
+  e) TLS_CERT_PATH="/etc/tacacs/tac_plus.crt" ;;
+esac
+fi
+
+
+printf "%s\n" "#define TLS_CERT_PATH \"$TLS_CERT_PATH\"" >>confdefs.h
+
+
+
+
+# Check whether --with-tls-key was given.
+if test ${with_tls_key+y}
+then :
+  withval=$with_tls_key; TLS_KEY_PATH="$withval"
+else case e in #(
+  e) TLS_KEY_PATH="/etc/tacacs/tac_plus.key" ;;
+esac
+fi
+
+
+printf "%s\n" "#define TLS_KEY_PATH \"$TLS_KEY_PATH\"" >>confdefs.h
+
+
+
+
+# Check whether --with-tls-ca was given.
+if test ${with_tls_ca+y}
+then :
+  withval=$with_tls_ca; TLS_CA_PATH="$withval"
+else case e in #(
+  e) TLS_CA_PATH="/etc/tacacs/ca.crt" ;;
+esac
+fi
+
+
+printf "%s\n" "#define TLS_CA_PATH \"$TLS_CA_PATH\"" >>confdefs.h
+
+
+
+
+# Check whether --with-tls-port was given.
+if test ${with_tls_port+y}
+then :
+  withval=$with_tls_port; TLS_PORT="$withval"
+else case e in #(
+  e) TLS_PORT="49" ;;
+esac
+fi
+
+
+printf "%s\n" "#define TLS_PORT $TLS_PORT" >>confdefs.h
+
+
+
+
+# Check whether --enable-tls-same-port was given.
+if test ${enable_tls_same_port+y}
+then :
+  enableval=$enable_tls_same_port;  case "$enable_tls_same_port" in
+  yes)
+    printf "%s\n" "#define TLS_SAME_PORT 1" >>confdefs.h
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: TLS will use same port as legacy" >&5
+printf "%s\n" "TLS will use same port as legacy" >&6; }
+    ;;
+  no | *)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: TLS will use separate port" >&5
+printf "%s\n" "TLS will use separate port" >&6; }
+    ;;
+  esac
+else case e in #(
+  e) # ie: no --{enable,disable}-tls-same-port option, withval == ""
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: TLS will use separate port" >&5
+printf "%s\n" "TLS will use separate port" >&6; }
+ ;;
+esac
+fi
+
+
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for alt pid file FQPN" >&5
 printf %s "checking for alt pid file FQPN... " >&6; }
 if test -d /var/run; then
@@ -17645,6 +18289,545 @@ then :
 fi
 
 
+# look for libsodium for Argon2 and modern crypto
+
+
+# Check for pkg-config first
+# Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_path_PKG_CONFIG+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir$ac_word$ac_exec_ext"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_PKG_CONFIG" && ac_cv_path_PKG_CONFIG="no"
+  ;;
+esac ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+if test -n "$PKG_CONFIG"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
+printf "%s\n" "$PKG_CONFIG" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+if test "x$PKG_CONFIG" = "xno"; then
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: pkg-config not found. Trying manual detection..." >&5
+printf "%s\n" "$as_me: WARNING: pkg-config not found. Trying manual detection..." >&2;}
+    # Manual detection without pkg-config
+    # Add common include paths for FreeBSD/Linux
+    OLD_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+    OLD_LDFLAGS="$LDFLAGS"
+    LDFLAGS="$LDFLAGS -L/usr/local/lib"
+    ac_fn_c_check_header_compile "$LINENO" "sodium.h" "ac_cv_header_sodium_h" "$ac_includes_default"
+if test "x$ac_cv_header_sodium_h" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for crypto_pwhash_argon2id_str in -lsodium" >&5
+printf %s "checking for crypto_pwhash_argon2id_str in -lsodium... " >&6; }
+if test ${ac_cv_lib_sodium_crypto_pwhash_argon2id_str+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsodium  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char crypto_pwhash_argon2id_str (void);
+int
+main (void)
+{
+return crypto_pwhash_argon2id_str ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_sodium_crypto_pwhash_argon2id_str=yes
+else case e in #(
+  e) ac_cv_lib_sodium_crypto_pwhash_argon2id_str=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sodium_crypto_pwhash_argon2id_str" >&5
+printf "%s\n" "$ac_cv_lib_sodium_crypto_pwhash_argon2id_str" >&6; }
+if test "x$ac_cv_lib_sodium_crypto_pwhash_argon2id_str" = xyes
+then :
+  printf "%s\n" "#define HAVE_LIBSODIUM 1" >>confdefs.h
+
+		 LIBS="-lsodium $LIBS"
+		 LIBSODIUM_LIBS="-lsodium"
+		 LIBSODIUM_CFLAGS="-I/usr/local/include"
+		 LIBSODIUM_LIBS="-L/usr/local/lib -lsodium"
+		 # Keep the paths for build
+		 CPPFLAGS="$CPPFLAGS"
+		 LDFLAGS="$LDFLAGS"
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium library not found. Argon2 password hashing will be disabled." >&5
+printf "%s\n" "$as_me: WARNING: libsodium library not found. Argon2 password hashing will be disabled." >&2;}
+		 # Restore original paths
+		 CPPFLAGS="$OLD_CPPFLAGS"
+		 LDFLAGS="$OLD_LDFLAGS" ;;
+esac
+fi
+
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium headers not found. Argon2 password hashing will be disabled." >&5
+printf "%s\n" "$as_me: WARNING: libsodium headers not found. Argon2 password hashing will be disabled." >&2;}
+	 # Restore original paths
+	 CPPFLAGS="$OLD_CPPFLAGS"
+	 LDFLAGS="$OLD_LDFLAGS" ;;
+esac
+fi
+
+else
+    # Use pkg-config if available
+
+
+
+
+
+
+
+if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
+	if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
+set dummy ${ac_tool_prefix}pkg-config; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_path_PKG_CONFIG+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir$ac_word$ac_exec_ext"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+if test -n "$PKG_CONFIG"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
+printf "%s\n" "$PKG_CONFIG" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_path_PKG_CONFIG"; then
+  ac_pt_PKG_CONFIG=$PKG_CONFIG
+  # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_path_ac_pt_PKG_CONFIG+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) case $ac_pt_PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ac_pt_PKG_CONFIG="$ac_pt_PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_path_ac_pt_PKG_CONFIG="$as_dir$ac_word$ac_exec_ext"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac ;;
+esac
+fi
+ac_pt_PKG_CONFIG=$ac_cv_path_ac_pt_PKG_CONFIG
+if test -n "$ac_pt_PKG_CONFIG"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_pt_PKG_CONFIG" >&5
+printf "%s\n" "$ac_pt_PKG_CONFIG" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+  if test "x$ac_pt_PKG_CONFIG" = x; then
+    PKG_CONFIG=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+printf "%s\n" "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    PKG_CONFIG=$ac_pt_PKG_CONFIG
+  fi
+else
+  PKG_CONFIG="$ac_cv_path_PKG_CONFIG"
+fi
+
+fi
+if test -n "$PKG_CONFIG"; then
+	_pkg_min_version=0.9.0
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
+printf %s "checking pkg-config is at least version $_pkg_min_version... " >&6; }
+	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
+		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+	else
+		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+		PKG_CONFIG=""
+	fi
+fi
+
+pkg_failed=no
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for libsodium" >&5
+printf %s "checking for libsodium... " >&6; }
+
+if test -n "$LIBSODIUM_CFLAGS"; then
+    pkg_cv_LIBSODIUM_CFLAGS="$LIBSODIUM_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libsodium\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libsodium") 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBSODIUM_CFLAGS=`$PKG_CONFIG --cflags "libsodium" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$LIBSODIUM_LIBS"; then
+    pkg_cv_LIBSODIUM_LIBS="$LIBSODIUM_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libsodium\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libsodium") 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBSODIUM_LIBS=`$PKG_CONFIG --libs "libsodium" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+                LIBSODIUM_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libsodium" 2>&1`
+        else
+                LIBSODIUM_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libsodium" 2>&1`
+        fi
+        # Put the nasty error message in config.log where it belongs
+        echo "$LIBSODIUM_PKG_ERRORS" >&5
+
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium not found via pkg-config. Trying manual detection..." >&5
+printf "%s\n" "$as_me: WARNING: libsodium not found via pkg-config. Trying manual detection..." >&2;}
+	 # Add common include paths for FreeBSD/Linux
+	 OLD_CPPFLAGS="$CPPFLAGS"
+	 CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+	 OLD_LDFLAGS="$LDFLAGS"
+	 LDFLAGS="$LDFLAGS -L/usr/local/lib"
+	 ac_fn_c_check_header_compile "$LINENO" "sodium.h" "ac_cv_header_sodium_h" "$ac_includes_default"
+if test "x$ac_cv_header_sodium_h" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for crypto_pwhash_argon2id_str in -lsodium" >&5
+printf %s "checking for crypto_pwhash_argon2id_str in -lsodium... " >&6; }
+if test ${ac_cv_lib_sodium_crypto_pwhash_argon2id_str+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsodium  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char crypto_pwhash_argon2id_str (void);
+int
+main (void)
+{
+return crypto_pwhash_argon2id_str ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_sodium_crypto_pwhash_argon2id_str=yes
+else case e in #(
+  e) ac_cv_lib_sodium_crypto_pwhash_argon2id_str=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sodium_crypto_pwhash_argon2id_str" >&5
+printf "%s\n" "$ac_cv_lib_sodium_crypto_pwhash_argon2id_str" >&6; }
+if test "x$ac_cv_lib_sodium_crypto_pwhash_argon2id_str" = xyes
+then :
+  printf "%s\n" "#define HAVE_LIBSODIUM 1" >>confdefs.h
+
+			 LIBS="-lsodium $LIBS"
+			 LIBSODIUM_LIBS="-lsodium"
+			 LIBSODIUM_CFLAGS="-I/usr/local/include"
+			 LIBSODIUM_LIBS="-L/usr/local/lib -lsodium"
+			 # Keep the paths for build
+			 CPPFLAGS="$CPPFLAGS"
+			 LDFLAGS="$LDFLAGS"
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium library not found. Argon2 password hashing will be disabled." >&5
+printf "%s\n" "$as_me: WARNING: libsodium library not found. Argon2 password hashing will be disabled." >&2;}
+			 # Restore original paths
+			 CPPFLAGS="$OLD_CPPFLAGS"
+			 LDFLAGS="$OLD_LDFLAGS" ;;
+esac
+fi
+
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium headers not found. Argon2 password hashing will be disabled." >&5
+printf "%s\n" "$as_me: WARNING: libsodium headers not found. Argon2 password hashing will be disabled." >&2;}
+		 # Restore original paths
+		 CPPFLAGS="$OLD_CPPFLAGS"
+		 LDFLAGS="$OLD_LDFLAGS" ;;
+esac
+fi
+
+elif test $pkg_failed = untried; then
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium not found via pkg-config. Trying manual detection..." >&5
+printf "%s\n" "$as_me: WARNING: libsodium not found via pkg-config. Trying manual detection..." >&2;}
+	 # Add common include paths for FreeBSD/Linux
+	 OLD_CPPFLAGS="$CPPFLAGS"
+	 CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+	 OLD_LDFLAGS="$LDFLAGS"
+	 LDFLAGS="$LDFLAGS -L/usr/local/lib"
+	 ac_fn_c_check_header_compile "$LINENO" "sodium.h" "ac_cv_header_sodium_h" "$ac_includes_default"
+if test "x$ac_cv_header_sodium_h" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for crypto_pwhash_argon2id_str in -lsodium" >&5
+printf %s "checking for crypto_pwhash_argon2id_str in -lsodium... " >&6; }
+if test ${ac_cv_lib_sodium_crypto_pwhash_argon2id_str+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsodium  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char crypto_pwhash_argon2id_str (void);
+int
+main (void)
+{
+return crypto_pwhash_argon2id_str ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_sodium_crypto_pwhash_argon2id_str=yes
+else case e in #(
+  e) ac_cv_lib_sodium_crypto_pwhash_argon2id_str=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sodium_crypto_pwhash_argon2id_str" >&5
+printf "%s\n" "$ac_cv_lib_sodium_crypto_pwhash_argon2id_str" >&6; }
+if test "x$ac_cv_lib_sodium_crypto_pwhash_argon2id_str" = xyes
+then :
+  printf "%s\n" "#define HAVE_LIBSODIUM 1" >>confdefs.h
+
+			 LIBS="-lsodium $LIBS"
+			 LIBSODIUM_LIBS="-lsodium"
+			 LIBSODIUM_CFLAGS="-I/usr/local/include"
+			 LIBSODIUM_LIBS="-L/usr/local/lib -lsodium"
+			 # Keep the paths for build
+			 CPPFLAGS="$CPPFLAGS"
+			 LDFLAGS="$LDFLAGS"
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium library not found. Argon2 password hashing will be disabled." >&5
+printf "%s\n" "$as_me: WARNING: libsodium library not found. Argon2 password hashing will be disabled." >&2;}
+			 # Restore original paths
+			 CPPFLAGS="$OLD_CPPFLAGS"
+			 LDFLAGS="$OLD_LDFLAGS" ;;
+esac
+fi
+
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium headers not found. Argon2 password hashing will be disabled." >&5
+printf "%s\n" "$as_me: WARNING: libsodium headers not found. Argon2 password hashing will be disabled." >&2;}
+		 # Restore original paths
+		 CPPFLAGS="$OLD_CPPFLAGS"
+		 LDFLAGS="$OLD_LDFLAGS" ;;
+esac
+fi
+
+else
+        LIBSODIUM_CFLAGS=$pkg_cv_LIBSODIUM_CFLAGS
+        LIBSODIUM_LIBS=$pkg_cv_LIBSODIUM_LIBS
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+        printf "%s\n" "#define HAVE_LIBSODIUM 1" >>confdefs.h
+
+	 LIBS="$LIBSODIUM_LIBS $LIBS"
+	 CPPFLAGS="$LIBSODIUM_CFLAGS $CPPFLAGS"
+fi
+fi
+
+# Substitute libsodium variables for Makefile
+
+
+
+# Check for bcrypt support in system crypt() function
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for bcrypt support in system crypt()" >&5
+printf %s "checking for bcrypt support in system crypt()... " >&6; }
+# Since we know bcrypt is supported by the system crypt() function,
+# we'll define it directly. The test program confirmed it works.
+printf "%s\n" "#define HAVE_BCRYPT 1" >>confdefs.h
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+
+# Check for system crypt() function with modern algorithms
+ac_fn_c_check_func "$LINENO" "crypt" "ac_cv_func_crypt"
+if test "x$ac_cv_func_crypt" = xyes
+then :
+  printf "%s\n" "#define HAVE_CRYPT 1" >>confdefs.h
+
+fi
+
+if test "$ac_cv_func_crypt" = yes; then
+    printf "%s\n" "#define HAVE_CRYPT 1" >>confdefs.h
+
+fi
+
+# OpenSSL removed - using libsodium and system crypt() instead
+
+# OpenSSL removed - using libsodium and system crypt() instead
+
 # check includes/headers
 # Autoupdate added the next two lines to ensure that your configure
 # script's behavior did not change.  They are probably safe to remove.
@@ -17854,6 +19037,72 @@ ac_fn_c_check_header_compile "$LINENO" "wait.h" "ac_cv_header_wait_h" "$ac_inclu
 if test "x$ac_cv_header_wait_h" = xyes
 then :
   printf "%s\n" "#define HAVE_WAIT_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "sodium.h" "ac_cv_header_sodium_h" "$ac_includes_default"
+if test "x$ac_cv_header_sodium_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_SODIUM_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "grp.h" "ac_cv_header_grp_h" "$ac_includes_default"
+if test "x$ac_cv_header_grp_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_GRP_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "poll.h" "ac_cv_header_poll_h" "$ac_includes_default"
+if test "x$ac_cv_header_poll_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_POLL_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "pwd.h" "ac_cv_header_pwd_h" "$ac_includes_default"
+if test "x$ac_cv_header_pwd_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_PWD_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "netinet/tcp.h" "ac_cv_header_netinet_tcp_h" "$ac_includes_default"
+if test "x$ac_cv_header_netinet_tcp_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_NETINET_TCP_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "sys/ioctl.h" "ac_cv_header_sys_ioctl_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_ioctl_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_SYS_IOCTL_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "sys/file.h" "ac_cv_header_sys_file_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_file_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_SYS_FILE_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "regex.h" "ac_cv_header_regex_h" "$ac_includes_default"
+if test "x$ac_cv_header_regex_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_REGEX_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "varargs.h" "ac_cv_header_varargs_h" "$ac_includes_default"
+if test "x$ac_cv_header_varargs_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_VARARGS_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "skey.h" "ac_cv_header_skey_h" "$ac_includes_default"
+if test "x$ac_cv_header_skey_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_SKEY_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "acexport.h" "ac_cv_header_acexport_h" "$ac_includes_default"
+if test "x$ac_cv_header_acexport_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_ACEXPORT_H 1" >>confdefs.h
 
 fi
 

@@ -32,7 +32,9 @@
 #ifdef __STDC__
 #include <stdarg.h>		/* ANSI C, variable length args */
 #else
-#include <varargs.h>		/* has 'vararg' definitions */
+#ifdef HAVE_VARARGS_H
+# include <varargs.h>		/* has 'vararg' definitions */
+#endif
 #endif
 
 FILE *ostream = NULL;

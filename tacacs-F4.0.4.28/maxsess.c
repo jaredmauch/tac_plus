@@ -25,7 +25,9 @@
 #if HAVE_CTYPE_H
 # include <ctype.h>
 #endif
-#include <poll.h>
+#ifdef HAVE_POLL_H
+# include <poll.h>
+#endif
 #include <signal.h>
 
 char *wholog = TACPLUS_WHOLOGFILE;

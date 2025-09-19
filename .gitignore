@@ -1,0 +1,66 @@
+# Build artifacts
+*.o
+*.a
+*.so
+*.so.*
+*.la
+*.lo
+*.Po
+*.Plo
+*.log
+*.status
+Makefile
+config.h
+config.h.in~
+stamp-h*
+*.orig
+*.rej
+
+# Autotools generated files
+aclocal.m4
+autom4te.cache/
+config.guess
+config.sub
+configure
+depcomp
+install-sh
+libtool
+ltmain.sh
+missing
+mkinstalldirs
+ylwrap
+
+# Build directories
+.deps/
+.libs/
+.dirstamp
+
+# Generated binaries
+tac_plus
+tac_pwd
+tac_convert
+users_guide
+
+# Generated man pages
+*.8
+*.5
+
+# Generated headers
+pathsl.h
+version.h
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

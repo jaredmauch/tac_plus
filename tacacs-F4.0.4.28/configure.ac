@@ -14,6 +14,10 @@ AC_CONFIG_AUX_DIR([aconf])
 AC_CONFIG_MACRO_DIR([aconf])
 AM_INIT_AUTOMAKE
 
+# Configure shell for portability
+AC_PROG_SHELL
+AC_DEFINE_UNQUOTED([CONFIG_SHELL], ["$SHELL"], [Shell used by config.status])
+
 AM_MAINTAINER_MODE()
 
 dnl AC_CONFIG_SUBDIRS(etc man share)

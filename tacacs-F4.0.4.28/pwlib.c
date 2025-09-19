@@ -221,6 +221,7 @@ verify(char *name, char *passwd, struct authen_data *data, int recurse)
     }
 
     /* Modern password hashing types */
+#ifdef HAVE_BCRYPT
     p = tac_find_substring("bcrypt ", cfg_passwd);
     if (p) {
 	if (!bcrypt_verify(passwd, p)) {
@@ -234,8 +235,9 @@ verify(char *name, char *passwd, struct authen_data *data, int recurse)
 	set_expiration_status(exp_date, data);
 	return(data->status == TAC_PLUS_AUTHEN_STATUS_PASS);
     }
+#endif
 
-#ifdef HAVE_LIBSODIUM
+#ifdef HAVE_ARGON2
     p = tac_find_substring("argon2 ", cfg_passwd);
     if (p) {
 	if (!argon2_verify(passwd, p)) {

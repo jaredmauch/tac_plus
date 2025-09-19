@@ -17820,6 +17820,11 @@ if test "x$PKG_CONFIG" = "xno"; then
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: pkg-config not found. Trying manual detection..." >&5
 printf "%s\n" "$as_me: WARNING: pkg-config not found. Trying manual detection..." >&2;}
     # Manual detection without pkg-config
+    # Add common include paths for FreeBSD/Linux
+    OLD_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+    OLD_LDFLAGS="$LDFLAGS"
+    LDFLAGS="$LDFLAGS -L/usr/local/lib"
     ac_fn_c_check_header_compile "$LINENO" "sodium.h" "ac_cv_header_sodium_h" "$ac_includes_default"
 if test "x$ac_cv_header_sodium_h" = xyes
 then :
@@ -17872,15 +17877,26 @@ then :
 
 		 LIBS="-lsodium $LIBS"
 		 LIBSODIUM_LIBS="-lsodium"
+		 LIBSODIUM_CFLAGS="-I/usr/local/include"
+		 LIBSODIUM_LIBS="-L/usr/local/lib -lsodium"
+		 # Keep the paths for build
+		 CPPFLAGS="$CPPFLAGS"
+		 LDFLAGS="$LDFLAGS"
 else case e in #(
   e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium library not found. Argon2 password hashing will be disabled." >&5
-printf "%s\n" "$as_me: WARNING: libsodium library not found. Argon2 password hashing will be disabled." >&2;} ;;
+printf "%s\n" "$as_me: WARNING: libsodium library not found. Argon2 password hashing will be disabled." >&2;}
+		 # Restore original paths
+		 CPPFLAGS="$OLD_CPPFLAGS"
+		 LDFLAGS="$OLD_LDFLAGS" ;;
 esac
 fi
 
 else case e in #(
   e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium headers not found. Argon2 password hashing will be disabled." >&5
-printf "%s\n" "$as_me: WARNING: libsodium headers not found. Argon2 password hashing will be disabled." >&2;} ;;
+printf "%s\n" "$as_me: WARNING: libsodium headers not found. Argon2 password hashing will be disabled." >&2;}
+	 # Restore original paths
+	 CPPFLAGS="$OLD_CPPFLAGS"
+	 LDFLAGS="$OLD_LDFLAGS" ;;
 esac
 fi
 
@@ -18079,6 +18095,11 @@ fi
 
         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium not found via pkg-config. Trying manual detection..." >&5
 printf "%s\n" "$as_me: WARNING: libsodium not found via pkg-config. Trying manual detection..." >&2;}
+	 # Add common include paths for FreeBSD/Linux
+	 OLD_CPPFLAGS="$CPPFLAGS"
+	 CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+	 OLD_LDFLAGS="$LDFLAGS"
+	 LDFLAGS="$LDFLAGS -L/usr/local/lib"
 	 ac_fn_c_check_header_compile "$LINENO" "sodium.h" "ac_cv_header_sodium_h" "$ac_includes_default"
 if test "x$ac_cv_header_sodium_h" = xyes
 then :
@@ -18131,15 +18152,26 @@ then :
 
 			 LIBS="-lsodium $LIBS"
 			 LIBSODIUM_LIBS="-lsodium"
+			 LIBSODIUM_CFLAGS="-I/usr/local/include"
+			 LIBSODIUM_LIBS="-L/usr/local/lib -lsodium"
+			 # Keep the paths for build
+			 CPPFLAGS="$CPPFLAGS"
+			 LDFLAGS="$LDFLAGS"
 else case e in #(
   e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium library not found. Argon2 password hashing will be disabled." >&5
-printf "%s\n" "$as_me: WARNING: libsodium library not found. Argon2 password hashing will be disabled." >&2;} ;;
+printf "%s\n" "$as_me: WARNING: libsodium library not found. Argon2 password hashing will be disabled." >&2;}
+			 # Restore original paths
+			 CPPFLAGS="$OLD_CPPFLAGS"
+			 LDFLAGS="$OLD_LDFLAGS" ;;
 esac
 fi
 
 else case e in #(
   e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium headers not found. Argon2 password hashing will be disabled." >&5
-printf "%s\n" "$as_me: WARNING: libsodium headers not found. Argon2 password hashing will be disabled." >&2;} ;;
+printf "%s\n" "$as_me: WARNING: libsodium headers not found. Argon2 password hashing will be disabled." >&2;}
+		 # Restore original paths
+		 CPPFLAGS="$OLD_CPPFLAGS"
+		 LDFLAGS="$OLD_LDFLAGS" ;;
 esac
 fi
 
@@ -18148,6 +18180,11 @@ elif test $pkg_failed = untried; then
 printf "%s\n" "no" >&6; }
         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium not found via pkg-config. Trying manual detection..." >&5
 printf "%s\n" "$as_me: WARNING: libsodium not found via pkg-config. Trying manual detection..." >&2;}
+	 # Add common include paths for FreeBSD/Linux
+	 OLD_CPPFLAGS="$CPPFLAGS"
+	 CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+	 OLD_LDFLAGS="$LDFLAGS"
+	 LDFLAGS="$LDFLAGS -L/usr/local/lib"
 	 ac_fn_c_check_header_compile "$LINENO" "sodium.h" "ac_cv_header_sodium_h" "$ac_includes_default"
 if test "x$ac_cv_header_sodium_h" = xyes
 then :
@@ -18200,15 +18237,26 @@ then :
 
 			 LIBS="-lsodium $LIBS"
 			 LIBSODIUM_LIBS="-lsodium"
+			 LIBSODIUM_CFLAGS="-I/usr/local/include"
+			 LIBSODIUM_LIBS="-L/usr/local/lib -lsodium"
+			 # Keep the paths for build
+			 CPPFLAGS="$CPPFLAGS"
+			 LDFLAGS="$LDFLAGS"
 else case e in #(
   e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium library not found. Argon2 password hashing will be disabled." >&5
-printf "%s\n" "$as_me: WARNING: libsodium library not found. Argon2 password hashing will be disabled." >&2;} ;;
+printf "%s\n" "$as_me: WARNING: libsodium library not found. Argon2 password hashing will be disabled." >&2;}
+			 # Restore original paths
+			 CPPFLAGS="$OLD_CPPFLAGS"
+			 LDFLAGS="$OLD_LDFLAGS" ;;
 esac
 fi
 
 else case e in #(
   e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: libsodium headers not found. Argon2 password hashing will be disabled." >&5
-printf "%s\n" "$as_me: WARNING: libsodium headers not found. Argon2 password hashing will be disabled." >&2;} ;;
+printf "%s\n" "$as_me: WARNING: libsodium headers not found. Argon2 password hashing will be disabled." >&2;}
+		 # Restore original paths
+		 CPPFLAGS="$OLD_CPPFLAGS"
+		 LDFLAGS="$OLD_LDFLAGS" ;;
 esac
 fi
 
@@ -18223,6 +18271,10 @@ printf "%s\n" "yes" >&6; }
 	 CPPFLAGS="$LIBSODIUM_CFLAGS $CPPFLAGS"
 fi
 fi
+
+# Substitute libsodium variables for Makefile
+
+
 
 # Check for bcrypt support in system crypt() function
 

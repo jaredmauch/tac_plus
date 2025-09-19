@@ -815,13 +815,29 @@ AC_PATH_PROG([PKG_CONFIG], [pkg-config], [no])
 if test "x$PKG_CONFIG" = "xno"; then
     AC_MSG_WARN([pkg-config not found. Trying manual detection...])
     # Manual detection without pkg-config
+    # Add common include paths for FreeBSD/Linux
+    OLD_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+    OLD_LDFLAGS="$LDFLAGS"
+    LDFLAGS="$LDFLAGS -L/usr/local/lib"
     AC_CHECK_HEADER([sodium.h], 
 	[AC_CHECK_LIB([sodium], [crypto_pwhash_argon2id_str],
 		[AC_DEFINE(HAVE_LIBSODIUM)
 		 LIBS="-lsodium $LIBS"
-		 LIBSODIUM_LIBS="-lsodium"],
-		[AC_MSG_WARN([libsodium library not found. Argon2 password hashing will be disabled.])])],
-	[AC_MSG_WARN([libsodium headers not found. Argon2 password hashing will be disabled.])])
+		 LIBSODIUM_LIBS="-lsodium"
+		 LIBSODIUM_CFLAGS="-I/usr/local/include"
+		 LIBSODIUM_LIBS="-L/usr/local/lib -lsodium"
+		 # Keep the paths for build
+		 CPPFLAGS="$CPPFLAGS"
+		 LDFLAGS="$LDFLAGS"],
+		[AC_MSG_WARN([libsodium library not found. Argon2 password hashing will be disabled.])
+		 # Restore original paths
+		 CPPFLAGS="$OLD_CPPFLAGS"
+		 LDFLAGS="$OLD_LDFLAGS"])],
+	[AC_MSG_WARN([libsodium headers not found. Argon2 password hashing will be disabled.])
+	 # Restore original paths
+	 CPPFLAGS="$OLD_CPPFLAGS"
+	 LDFLAGS="$OLD_LDFLAGS"])
 else
     # Use pkg-config if available
     PKG_CHECK_MODULES([LIBSODIUM], [libsodium], 
@@ -829,14 +845,34 @@ else
 	 LIBS="$LIBSODIUM_LIBS $LIBS"
 	 CPPFLAGS="$LIBSODIUM_CFLAGS $CPPFLAGS"],
 	[AC_MSG_WARN([libsodium not found via pkg-config. Trying manual detection...])
+	 # Add common include paths for FreeBSD/Linux
+	 OLD_CPPFLAGS="$CPPFLAGS"
+	 CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+	 OLD_LDFLAGS="$LDFLAGS"
+	 LDFLAGS="$LDFLAGS -L/usr/local/lib"
 	 AC_CHECK_HEADER([sodium.h], 
 		[AC_CHECK_LIB([sodium], [crypto_pwhash_argon2id_str],
 			[AC_DEFINE(HAVE_LIBSODIUM)
 			 LIBS="-lsodium $LIBS"
-			 LIBSODIUM_LIBS="-lsodium"],
-			[AC_MSG_WARN([libsodium library not found. Argon2 password hashing will be disabled.])])],
-		[AC_MSG_WARN([libsodium headers not found. Argon2 password hashing will be disabled.])])])
+			 LIBSODIUM_LIBS="-lsodium"
+			 LIBSODIUM_CFLAGS="-I/usr/local/include"
+			 LIBSODIUM_LIBS="-L/usr/local/lib -lsodium"
+			 # Keep the paths for build
+			 CPPFLAGS="$CPPFLAGS"
+			 LDFLAGS="$LDFLAGS"],
+			[AC_MSG_WARN([libsodium library not found. Argon2 password hashing will be disabled.])
+			 # Restore original paths
+			 CPPFLAGS="$OLD_CPPFLAGS"
+			 LDFLAGS="$OLD_LDFLAGS"])],
+		[AC_MSG_WARN([libsodium headers not found. Argon2 password hashing will be disabled.])
+		 # Restore original paths
+		 CPPFLAGS="$OLD_CPPFLAGS"
+		 LDFLAGS="$OLD_LDFLAGS"])])
 fi
+
+# Substitute libsodium variables for Makefile
+AC_SUBST(LIBSODIUM_CFLAGS)
+AC_SUBST(LIBSODIUM_LIBS)
 
 # Check for bcrypt support in system crypt() function
 AH_TEMPLATE(HAVE_BCRYPT, [define if your system crypt() supports bcrypt])

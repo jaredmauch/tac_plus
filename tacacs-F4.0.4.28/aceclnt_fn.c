@@ -23,12 +23,17 @@
 #include "tac_plus.h"
 #include "expire.h"
 
+#ifdef ACECLNT
+#ifdef HAVE_ACEXPORT_H
+# include <acexport.h>
+#else
+# error "ACECLNT support requested but acexport.h not found"
+#endif
+
 /* internal state variables */
 #define STATE_AUTHEN_START   0	/* no requests issued */
 #define STATE_AUTHEN_GETUSER 1	/* username has been requested */
 #define STATE_AUTHEN_GETPASS 2	/* password has been requested */
-
-#include <acexport.h>
 
 struct private_data {
     SDI_HANDLE SdiHandle;
@@ -245,3 +250,15 @@ aceclnt_fn(struct authen_data *data)
 	return(1);
     }
 }
+
+#else /* !ACECLNT */
+
+/* Stub functions when ACECLNT is not available */
+int
+aceclnt_fn(struct authen_data *data)
+{
+    data->status = TAC_PLUS_AUTHEN_STATUS_ERROR;
+    return(1);
+}
+
+#endif /* ACECLNT */

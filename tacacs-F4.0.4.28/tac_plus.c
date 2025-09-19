@@ -25,11 +25,21 @@
 
 #include "version.h"
 #include "tac_plus.h"
-#include <grp.h>
-#include <netinet/tcp.h>
-#include <poll.h>
-#include <pwd.h>
-#include <sys/wait.h>
+#ifdef HAVE_GRP_H
+# include <grp.h>
+#endif
+#ifdef HAVE_NETINET_TCP_H
+# include <netinet/tcp.h>
+#endif
+#ifdef HAVE_POLL_H
+# include <poll.h>
+#endif
+#ifdef HAVE_PWD_H
+# include <pwd.h>
+#endif
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>
+#endif
 #include <signal.h>
 
 #ifdef LIBWRAP

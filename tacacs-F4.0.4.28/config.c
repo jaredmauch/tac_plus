@@ -21,7 +21,9 @@
  */
 
 #include "tac_plus.h"
-#include <regex.h>
+#ifdef HAVE_REGEX_H
+# include <regex.h>
+#endif
 #ifndef REG_OK
 # ifdef REG_NOERROR
 #  define REG_OK REG_NOERROR
@@ -277,7 +279,9 @@ static void	sym_get(void);
 static void
 parse_error(char *fmt, ...)
 #else
-#include <varargs.h>		/* has 'vararg' definitions */
+#ifdef HAVE_VARARGS_H
+# include <varargs.h>		/* has 'vararg' definitions */
+#endif
 /* VARARGS2 */
 static void
 parse_error(fmt, va_alist)

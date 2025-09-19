@@ -21,7 +21,9 @@
  */
 
 #include "tac_plus.h"
-#include <poll.h>
+#ifdef HAVE_POLL_H
+# include <poll.h>
+#endif
 #include <netdb.h>
 #include <signal.h>
 #include <time.h>

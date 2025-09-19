@@ -26,7 +26,9 @@
  */
 
 #include "tac_plus.h"
-#include <pwd.h>
+#ifdef HAVE_PWD_H
+# include <pwd.h>
+#endif
 #include <string.h>
 
 static struct passwd pw_passwd;

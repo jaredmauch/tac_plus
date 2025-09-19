@@ -299,6 +299,7 @@ AC_ARG_WITH(skey,
   yes)
     AC_MSG_RESULT(yes)
     AC_DEFINE(SKEY)
+    AC_CHECK_HEADERS([skey.h])
     AC_SEARCH_LIBS([skeychallenge], [skey],
 	[ ],
 	[AC_MSG_ERROR(Could not find libskey.  You must first install skey or provide a hint to the location of library and includes, as in --with-skey=/usr/local.)])
@@ -306,6 +307,7 @@ AC_ARG_WITH(skey,
   *)
     AC_MSG_RESULT(yes)
     AC_DEFINE(SKEY)
+    AC_CHECK_HEADERS([skey.h])
     if test -d "$withval" ; then
 	LDFAGS="$LDFLAGS -L$withval/lib"
 	CFLAGS="$CFLAGS -I$withval/include"
@@ -341,6 +343,7 @@ AC_ARG_WITH(aceclnt,
   yes)
     AC_MSG_RESULT(yes)
     AC_DEFINE(ACECLNT)
+    AC_CHECK_HEADERS([acexport.h])
     AC_SEARCH_LIBS([SD_Init], [aceclnt],
 	[ ],
 	[AC_MSG_ERROR(Could not find libaceclnt.  You must first install aceclnt or provide a hint to the location of library and includes, as in --with-aceclnt=/usr/local)])
@@ -348,6 +351,7 @@ AC_ARG_WITH(aceclnt,
   *)
     AC_MSG_RESULT(yes)
     AC_DEFINE(ACECLNT)
+    AC_CHECK_HEADERS([acexport.h])
     if test -d "$withval" ; then
 	LDFAGS="$LDFLAGS -L$withval/lib"
 	CFLAGS="$CFLAGS -I$withval/include"
@@ -764,7 +768,8 @@ AC_CHECK_HEADERS_ONCE([sys/time.h])
 AC_CHECK_HEADERS(crypt.h ctype.h errno.h fcntl.h malloc.h shadow.h stdlib.h \
 		stdint.h string.h strings.h sys/resource.h sys/socket.h \
 		sys/types.h sys/wait.h sysexits.h syslog.h termios.h unistd.h \
-		utmp.h utmpx.h wait.h sodium.h)
+		utmp.h utmpx.h wait.h sodium.h grp.h poll.h pwd.h netinet/tcp.h \
+		sys/ioctl.h sys/file.h regex.h varargs.h skey.h acexport.h)
 
 AH_TEMPLATE([SHADOW_PASSWORDS],
 	    [define if your system has a shadow password file])

@@ -23,12 +23,17 @@
 #include "tac_plus.h"
 #include "expire.h"
 
+#ifdef SKEY
+#ifdef HAVE_SKEY_H
+# include <skey.h>
+#else
+# error "SKEY support requested but skey.h not found"
+#endif
+
 /* internal state variables */
 #define STATE_AUTHEN_START   0	/* no requests issued */
 #define STATE_AUTHEN_GETUSER 1	/* username has been requested */
 #define STATE_AUTHEN_GETPASS 2	/* password has been requested */
-
-#include <skey.h>
 
 struct private_data {
     struct skey skey;
@@ -222,3 +227,15 @@ skey_fn(struct authen_data *data)
 	return(1);
     }
 }
+
+#else /* !SKEY */
+
+/* Stub functions when SKEY is not available */
+int
+skey_fn(struct authen_data *data)
+{
+    data->status = TAC_PLUS_AUTHEN_STATUS_ERROR;
+    return(1);
+}
+
+#endif /* SKEY */

@@ -109,6 +109,12 @@ choose_login(struct authen_data *data, struct authen_type *type)
 
     switch(type->authen_type) {
     case TAC_PLUS_AUTHEN_TYPE_ASCII:
+#ifndef ENABLE_ASCII
+	/* ASCII authentication is disabled by default for security (RFC 8907 compliance) */
+	report(LOG_ERR, "%s: %s %s ASCII authentication rejected - ASCII disabled for security",
+	       session.peer, session.port, name ? name : "<unknown>");
+	return(CHOOSE_FAILED);
+#else
 	if (session.version != TAC_PLUS_VER_0) {
 	    break;
 	}
@@ -117,6 +123,7 @@ choose_login(struct authen_data *data, struct authen_type *type)
 	    /* request a user name if not already supplied */
 	    return(CHOOSE_GETUSER);
 	}
+#endif
 
 	/* Does this user require s/key? */
 	cfg_passwd = cfg_get_login_secret(name, TAC_PLUS_RECURSE);
@@ -195,6 +202,32 @@ choose_login(struct authen_data *data, struct authen_type *type)
 #endif /* MSCHAP */
 
     case TAC_PLUS_AUTHEN_TYPE_PAP:
+#ifndef ENABLE_PAP
+	/* PAP authentication is disabled by default for security (RFC 8907 compliance) */
+	report(LOG_ERR, "%s: %s %s PAP authentication rejected - PAP disabled for security",
+	       session.peer, session.port, name ? name : "<unknown>");
+	return(CHOOSE_FAILED);
+#else
+	if (session.version == TAC_PLUS_VER_0) {
+	    type->authen_func = default_v0_fn;
+	    strcpy(type->authen_name, "default_v0_fn");
+	    return(CHOOSE_OK);
+	}
+
+	/*
+	 * Version 1 login/pap.
+	 * The username must be in the initial START packet
+	 */
+	if (!name[0]) {
+	    report(LOG_ERR, "%s %s: No user in START packet for PAP",
+		   session.peer, session.port);
+	    return(CHOOSE_FAILED);
+	}
+	type->authen_func = default_fn;
+	strcpy(type->authen_name, "default_fn");
+	return(CHOOSE_OK);
+#endif
+
     case TAC_PLUS_AUTHEN_TYPE_CHAP:
 	if (session.version == TAC_PLUS_VER_0) {
 	    type->authen_func = default_v0_fn;
@@ -203,11 +236,11 @@ choose_login(struct authen_data *data, struct authen_type *type)
 	}
 
 	/*
-	 * Version 1 login/[pap|chap|arap].
+	 * Version 1 login/chap.
 	 * The username must be in the initial START packet
 	 */
 	if (!name[0]) {
-	    report(LOG_ERR, "%s %s: No user in START packet for PAP/CHAP/ARAP",
+	    report(LOG_ERR, "%s %s: No user in START packet for CHAP",
 		   session.peer, session.port);
 	    return(CHOOSE_FAILED);
 	}

@@ -688,6 +688,146 @@ AC_ARG_ENABLE(debug-secrets,
 AC_SUBST(DEBUG_SECRET_LOGGING)
 
 dnl
+dnl PAP Support - enable/disable PAP authentication (disabled by default for security)
+dnl
+AC_MSG_CHECKING(whether to enable PAP authentication)
+AH_TEMPLATE(ENABLE_PAP, [define this to enable PAP authentication (disabled by default for security)])
+AC_ARG_ENABLE(pap,
+    AS_HELP_STRING([--enable-pap],[enable PAP authentication (disabled by default for security)]),
+[ case "$enable_pap" in
+  yes)
+    AC_MSG_RESULT(yes)
+    AC_DEFINE(ENABLE_PAP)
+    ;;
+  no | *)
+    AC_MSG_RESULT(no)
+    ;;
+  esac ],
+  # ie: no --{enable,disable}-pap option, withval == ""
+  AC_MSG_RESULT(no)
+)
+AC_SUBST(ENABLE_PAP)
+
+dnl
+dnl ASCII Support - enable/disable ASCII authentication (disabled by default for security)
+dnl
+AC_MSG_CHECKING(whether to enable ASCII authentication)
+AH_TEMPLATE(ENABLE_ASCII, [define this to enable ASCII authentication (disabled by default for security)])
+AC_ARG_ENABLE(ascii,
+    AS_HELP_STRING([--enable-ascii],[enable ASCII authentication (disabled by default for security)]),
+[ case "$enable_ascii" in
+  yes)
+    AC_MSG_RESULT(yes)
+    AC_DEFINE(ENABLE_ASCII)
+    ;;
+  no | *)
+    AC_MSG_RESULT(no)
+    ;;
+  esac ],
+  # ie: no --{enable,disable}-ascii option, withval == ""
+  AC_MSG_RESULT(no)
+)
+AC_SUBST(ENABLE_ASCII)
+
+dnl
+dnl TLS Support - enable TLS transport security (RFC 8907 compliance)
+dnl
+AC_MSG_CHECKING(whether to enable TLS support)
+AH_TEMPLATE(HAVE_TLS, [define this if TLS support is available])
+AC_ARG_ENABLE(tls,
+    AS_HELP_STRING([--enable-tls],[enable TLS 1.3 transport security (RFC 8907 compliance)]),
+[ case "$enable_tls" in
+  yes)
+    AC_MSG_RESULT(yes)
+    # Check for OpenSSL first (must support TLS 1.3)
+    AC_CHECK_LIB([ssl], [SSL_library_init], 
+        [AC_CHECK_LIB([crypto], [EVP_sha256],
+            [AC_CHECK_LIB([ssl], [TLS1_3_VERSION],
+                [AC_DEFINE(HAVE_TLS)
+                 TLS_LIBS="-lssl -lcrypto"
+                 AC_MSG_RESULT([TLS 1.3 support enabled with OpenSSL])],
+                [AC_MSG_WARN([OpenSSL does not support TLS 1.3, trying alternative TLS libraries...])
+                 # Try mbedTLS as fallback
+                 AC_CHECK_LIB([mbedtls], [mbedtls_ssl_init],
+                     [AC_DEFINE(HAVE_TLS)
+                      TLS_LIBS="-lmbedtls"
+                      AC_MSG_RESULT([TLS 1.3 support enabled with mbedTLS])],
+                     [AC_MSG_WARN([No suitable TLS 1.3 library found. TLS support disabled.])])])],
+            [AC_MSG_WARN([OpenSSL crypto library not found, trying alternative TLS libraries...])
+             # Try mbedTLS as fallback
+             AC_CHECK_LIB([mbedtls], [mbedtls_ssl_init],
+                 [AC_DEFINE(HAVE_TLS)
+                  TLS_LIBS="-lmbedtls"
+                  AC_MSG_RESULT([TLS support enabled with mbedTLS])],
+                 [AC_MSG_WARN([No suitable TLS library found. TLS support disabled.])])])],
+        [AC_MSG_WARN([OpenSSL SSL library not found, trying alternative TLS libraries...])
+         # Try mbedTLS as fallback
+         AC_CHECK_LIB([mbedtls], [mbedtls_ssl_init],
+             [AC_DEFINE(HAVE_TLS)
+              TLS_LIBS="-lmbedtls"
+              AC_MSG_RESULT([TLS support enabled with mbedTLS])],
+             [AC_MSG_WARN([No suitable TLS library found. TLS support disabled.])])])
+    ;;
+  no | *)
+    AC_MSG_RESULT(no)
+    ;;
+  esac ],
+  # ie: no --{enable,disable}-tls option, withval == ""
+  AC_MSG_RESULT(no)
+)
+AC_SUBST(TLS_LIBS)
+
+dnl
+dnl TLS Certificate paths
+dnl
+AC_ARG_WITH(tls-cert,
+    AS_HELP_STRING([--with-tls-cert=PATH],[path to TLS server certificate]),
+    [TLS_CERT_PATH="$withval"],
+    [TLS_CERT_PATH="/etc/tacacs/tac_plus.crt"])
+AC_DEFINE_UNQUOTED([TLS_CERT_PATH], ["$TLS_CERT_PATH"], [Path to TLS server certificate])
+AC_SUBST(TLS_CERT_PATH)
+
+AC_ARG_WITH(tls-key,
+    AS_HELP_STRING([--with-tls-key=PATH],[path to TLS server private key]),
+    [TLS_KEY_PATH="$withval"],
+    [TLS_KEY_PATH="/etc/tacacs/tac_plus.key"])
+AC_DEFINE_UNQUOTED([TLS_KEY_PATH], ["$TLS_KEY_PATH"], [Path to TLS server private key])
+AC_SUBST(TLS_KEY_PATH)
+
+AC_ARG_WITH(tls-ca,
+    AS_HELP_STRING([--with-tls-ca=PATH],[path to TLS CA certificate for client verification]),
+    [TLS_CA_PATH="$withval"],
+    [TLS_CA_PATH="/etc/tacacs/ca.crt"])
+AC_DEFINE_UNQUOTED([TLS_CA_PATH], ["$TLS_CA_PATH"], [Path to TLS CA certificate])
+AC_SUBST(TLS_CA_PATH)
+
+dnl
+dnl TLS Port configuration
+dnl
+AC_ARG_WITH(tls-port,
+    AS_HELP_STRING([--with-tls-port=PORT],[TLS port number (default: 49 for same port, 8443 for different port)]),
+    [TLS_PORT="$withval"],
+    [TLS_PORT="49"])
+AC_DEFINE_UNQUOTED([TLS_PORT], [$TLS_PORT], [TLS port number])
+AC_SUBST(TLS_PORT)
+
+AH_TEMPLATE([TLS_SAME_PORT], [define this to use same port for TLS and legacy])
+AC_ARG_ENABLE(tls-same-port,
+    AS_HELP_STRING([--enable-tls-same-port],[use same port for TLS and legacy (default: disabled)]),
+[ case "$enable_tls_same_port" in
+  yes)
+    AC_DEFINE(TLS_SAME_PORT)
+    AC_MSG_RESULT([TLS will use same port as legacy])
+    ;;
+  no | *)
+    AC_MSG_RESULT([TLS will use separate port])
+    ;;
+  esac ],
+  # ie: no --{enable,disable}-tls-same-port option, withval == ""
+  AC_MSG_RESULT([TLS will use separate port])
+)
+
+dnl
 dnl pid file location
 dnl
 AC_MSG_CHECKING(for alt pid file FQPN)

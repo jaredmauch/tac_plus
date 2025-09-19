@@ -227,6 +227,15 @@ extern struct timeval started_at;
 extern char *wtmpfile;
 extern int wtmpfd;
 
+/* TLS configuration variables */
+extern char *tls_cert_path;
+extern char *tls_key_path;
+extern char *tls_ca_path;
+extern int tls_port;
+
+/* TLS port configuration function */
+void set_tls_port(int port);
+
 #define HASH_TAB_SIZE 65539        /* user and group hash table sizes */
 
 struct acct {

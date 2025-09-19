@@ -667,6 +667,13 @@ TACPLUS_WHOLOGFILE
 TACPLUS_LOGFILE
 TACPLUS_ACCTFILE
 TACPLUS_PIDFILE
+TLS_PORT
+TLS_CA_PATH
+TLS_KEY_PATH
+TLS_CERT_PATH
+TLS_LIBS
+ENABLE_ASCII
+ENABLE_PAP
 DEBUG_SECRET_LOGGING
 ENABLE_SENDPASS
 MSCHAP_DES
@@ -853,6 +860,14 @@ enable_mschap
 enable_mschapdes
 enable_sendpass
 enable_debug_secrets
+enable_pap
+enable_ascii
+enable_tls
+with_tls_cert
+with_tls_key
+with_tls_ca
+with_tls_port
+enable_tls_same_port
 with_pidfile
 with_acctfile
 with_logfile
@@ -1535,6 +1550,13 @@ Optional Features:
                           security)
   --enable-debug-secrets  enable debug-only secret logging (for debugging
                           only)
+  --enable-pap            enable PAP authentication (disabled by default for
+                          security)
+  --enable-ascii          enable ASCII authentication (disabled by default for
+                          security)
+  --enable-tls            enable TLS 1.3 transport security (RFC 8907
+                          compliance)
+  --enable-tls-same-port  use same port for TLS and legacy (default: disabled)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1550,6 +1572,11 @@ Optional Packages:
                           lib, eg: /usr/local
   --with-userid=UID       tacacs will setuid(UID) after it binds the tcp port
   --with-groupid=UID      tacacs will setgid(GID) after it binds the tcp port
+  --with-tls-cert=PATH    path to TLS server certificate
+  --with-tls-key=PATH     path to TLS server private key
+  --with-tls-ca=PATH      path to TLS CA certificate for client verification
+  --with-tls-port=PORT    TLS port number (default: 49 for same port, 8443 for
+                          different port)
   --with-pidfile=PATH     alternate pidfile FQPN
   --with-acctfile=PATH    alternate accounting file FQPN
   --with-logfile=PATH     alternate log file FQPN
@@ -17545,6 +17572,503 @@ printf "%s\n" "no" >&6; }
 esac
 fi
 
+
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether to enable PAP authentication" >&5
+printf %s "checking whether to enable PAP authentication... " >&6; }
+
+# Check whether --enable-pap was given.
+if test ${enable_pap+y}
+then :
+  enableval=$enable_pap;  case "$enable_pap" in
+  yes)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+    printf "%s\n" "#define ENABLE_PAP 1" >>confdefs.h
+
+    ;;
+  no | *)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+    ;;
+  esac
+else case e in #(
+  e) # ie: no --{enable,disable}-pap option, withval == ""
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+ ;;
+esac
+fi
+
+
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether to enable ASCII authentication" >&5
+printf %s "checking whether to enable ASCII authentication... " >&6; }
+
+# Check whether --enable-ascii was given.
+if test ${enable_ascii+y}
+then :
+  enableval=$enable_ascii;  case "$enable_ascii" in
+  yes)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+    printf "%s\n" "#define ENABLE_ASCII 1" >>confdefs.h
+
+    ;;
+  no | *)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+    ;;
+  esac
+else case e in #(
+  e) # ie: no --{enable,disable}-ascii option, withval == ""
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+ ;;
+esac
+fi
+
+
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether to enable TLS support" >&5
+printf %s "checking whether to enable TLS support... " >&6; }
+
+# Check whether --enable-tls was given.
+if test ${enable_tls+y}
+then :
+  enableval=$enable_tls;  case "$enable_tls" in
+  yes)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+    # Check for OpenSSL first (must support TLS 1.3)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for SSL_library_init in -lssl" >&5
+printf %s "checking for SSL_library_init in -lssl... " >&6; }
+if test ${ac_cv_lib_ssl_SSL_library_init+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lssl  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char SSL_library_init (void);
+int
+main (void)
+{
+return SSL_library_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_ssl_SSL_library_init=yes
+else case e in #(
+  e) ac_cv_lib_ssl_SSL_library_init=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ssl_SSL_library_init" >&5
+printf "%s\n" "$ac_cv_lib_ssl_SSL_library_init" >&6; }
+if test "x$ac_cv_lib_ssl_SSL_library_init" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for EVP_sha256 in -lcrypto" >&5
+printf %s "checking for EVP_sha256 in -lcrypto... " >&6; }
+if test ${ac_cv_lib_crypto_EVP_sha256+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcrypto  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char EVP_sha256 (void);
+int
+main (void)
+{
+return EVP_sha256 ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_crypto_EVP_sha256=yes
+else case e in #(
+  e) ac_cv_lib_crypto_EVP_sha256=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_crypto_EVP_sha256" >&5
+printf "%s\n" "$ac_cv_lib_crypto_EVP_sha256" >&6; }
+if test "x$ac_cv_lib_crypto_EVP_sha256" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for TLS1_3_VERSION in -lssl" >&5
+printf %s "checking for TLS1_3_VERSION in -lssl... " >&6; }
+if test ${ac_cv_lib_ssl_TLS1_3_VERSION+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lssl  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char TLS1_3_VERSION (void);
+int
+main (void)
+{
+return TLS1_3_VERSION ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_ssl_TLS1_3_VERSION=yes
+else case e in #(
+  e) ac_cv_lib_ssl_TLS1_3_VERSION=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ssl_TLS1_3_VERSION" >&5
+printf "%s\n" "$ac_cv_lib_ssl_TLS1_3_VERSION" >&6; }
+if test "x$ac_cv_lib_ssl_TLS1_3_VERSION" = xyes
+then :
+  printf "%s\n" "#define HAVE_TLS 1" >>confdefs.h
+
+                 TLS_LIBS="-lssl -lcrypto"
+                 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: TLS 1.3 support enabled with OpenSSL" >&5
+printf "%s\n" "TLS 1.3 support enabled with OpenSSL" >&6; }
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: OpenSSL does not support TLS 1.3, trying alternative TLS libraries..." >&5
+printf "%s\n" "$as_me: WARNING: OpenSSL does not support TLS 1.3, trying alternative TLS libraries..." >&2;}
+                 # Try mbedTLS as fallback
+                 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for mbedtls_ssl_init in -lmbedtls" >&5
+printf %s "checking for mbedtls_ssl_init in -lmbedtls... " >&6; }
+if test ${ac_cv_lib_mbedtls_mbedtls_ssl_init+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmbedtls  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char mbedtls_ssl_init (void);
+int
+main (void)
+{
+return mbedtls_ssl_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_mbedtls_mbedtls_ssl_init=yes
+else case e in #(
+  e) ac_cv_lib_mbedtls_mbedtls_ssl_init=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mbedtls_mbedtls_ssl_init" >&5
+printf "%s\n" "$ac_cv_lib_mbedtls_mbedtls_ssl_init" >&6; }
+if test "x$ac_cv_lib_mbedtls_mbedtls_ssl_init" = xyes
+then :
+  printf "%s\n" "#define HAVE_TLS 1" >>confdefs.h
+
+                      TLS_LIBS="-lmbedtls"
+                      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: TLS 1.3 support enabled with mbedTLS" >&5
+printf "%s\n" "TLS 1.3 support enabled with mbedTLS" >&6; }
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: No suitable TLS 1.3 library found. TLS support disabled." >&5
+printf "%s\n" "$as_me: WARNING: No suitable TLS 1.3 library found. TLS support disabled." >&2;} ;;
+esac
+fi
+ ;;
+esac
+fi
+
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: OpenSSL crypto library not found, trying alternative TLS libraries..." >&5
+printf "%s\n" "$as_me: WARNING: OpenSSL crypto library not found, trying alternative TLS libraries..." >&2;}
+             # Try mbedTLS as fallback
+             { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for mbedtls_ssl_init in -lmbedtls" >&5
+printf %s "checking for mbedtls_ssl_init in -lmbedtls... " >&6; }
+if test ${ac_cv_lib_mbedtls_mbedtls_ssl_init+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmbedtls  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char mbedtls_ssl_init (void);
+int
+main (void)
+{
+return mbedtls_ssl_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_mbedtls_mbedtls_ssl_init=yes
+else case e in #(
+  e) ac_cv_lib_mbedtls_mbedtls_ssl_init=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mbedtls_mbedtls_ssl_init" >&5
+printf "%s\n" "$ac_cv_lib_mbedtls_mbedtls_ssl_init" >&6; }
+if test "x$ac_cv_lib_mbedtls_mbedtls_ssl_init" = xyes
+then :
+  printf "%s\n" "#define HAVE_TLS 1" >>confdefs.h
+
+                  TLS_LIBS="-lmbedtls"
+                  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: TLS support enabled with mbedTLS" >&5
+printf "%s\n" "TLS support enabled with mbedTLS" >&6; }
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: No suitable TLS library found. TLS support disabled." >&5
+printf "%s\n" "$as_me: WARNING: No suitable TLS library found. TLS support disabled." >&2;} ;;
+esac
+fi
+ ;;
+esac
+fi
+
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: OpenSSL SSL library not found, trying alternative TLS libraries..." >&5
+printf "%s\n" "$as_me: WARNING: OpenSSL SSL library not found, trying alternative TLS libraries..." >&2;}
+         # Try mbedTLS as fallback
+         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for mbedtls_ssl_init in -lmbedtls" >&5
+printf %s "checking for mbedtls_ssl_init in -lmbedtls... " >&6; }
+if test ${ac_cv_lib_mbedtls_mbedtls_ssl_init+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmbedtls  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char mbedtls_ssl_init (void);
+int
+main (void)
+{
+return mbedtls_ssl_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_mbedtls_mbedtls_ssl_init=yes
+else case e in #(
+  e) ac_cv_lib_mbedtls_mbedtls_ssl_init=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mbedtls_mbedtls_ssl_init" >&5
+printf "%s\n" "$ac_cv_lib_mbedtls_mbedtls_ssl_init" >&6; }
+if test "x$ac_cv_lib_mbedtls_mbedtls_ssl_init" = xyes
+then :
+  printf "%s\n" "#define HAVE_TLS 1" >>confdefs.h
+
+              TLS_LIBS="-lmbedtls"
+              { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: TLS support enabled with mbedTLS" >&5
+printf "%s\n" "TLS support enabled with mbedTLS" >&6; }
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: No suitable TLS library found. TLS support disabled." >&5
+printf "%s\n" "$as_me: WARNING: No suitable TLS library found. TLS support disabled." >&2;} ;;
+esac
+fi
+ ;;
+esac
+fi
+
+    ;;
+  no | *)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+    ;;
+  esac
+else case e in #(
+  e) # ie: no --{enable,disable}-tls option, withval == ""
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+ ;;
+esac
+fi
+
+
+
+
+# Check whether --with-tls-cert was given.
+if test ${with_tls_cert+y}
+then :
+  withval=$with_tls_cert; TLS_CERT_PATH="$withval"
+else case e in #(
+  e) TLS_CERT_PATH="/etc/tacacs/tac_plus.crt" ;;
+esac
+fi
+
+
+printf "%s\n" "#define TLS_CERT_PATH \"$TLS_CERT_PATH\"" >>confdefs.h
+
+
+
+
+# Check whether --with-tls-key was given.
+if test ${with_tls_key+y}
+then :
+  withval=$with_tls_key; TLS_KEY_PATH="$withval"
+else case e in #(
+  e) TLS_KEY_PATH="/etc/tacacs/tac_plus.key" ;;
+esac
+fi
+
+
+printf "%s\n" "#define TLS_KEY_PATH \"$TLS_KEY_PATH\"" >>confdefs.h
+
+
+
+
+# Check whether --with-tls-ca was given.
+if test ${with_tls_ca+y}
+then :
+  withval=$with_tls_ca; TLS_CA_PATH="$withval"
+else case e in #(
+  e) TLS_CA_PATH="/etc/tacacs/ca.crt" ;;
+esac
+fi
+
+
+printf "%s\n" "#define TLS_CA_PATH \"$TLS_CA_PATH\"" >>confdefs.h
+
+
+
+
+# Check whether --with-tls-port was given.
+if test ${with_tls_port+y}
+then :
+  withval=$with_tls_port; TLS_PORT="$withval"
+else case e in #(
+  e) TLS_PORT="49" ;;
+esac
+fi
+
+
+printf "%s\n" "#define TLS_PORT $TLS_PORT" >>confdefs.h
+
+
+
+
+# Check whether --enable-tls-same-port was given.
+if test ${enable_tls_same_port+y}
+then :
+  enableval=$enable_tls_same_port;  case "$enable_tls_same_port" in
+  yes)
+    printf "%s\n" "#define TLS_SAME_PORT 1" >>confdefs.h
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: TLS will use same port as legacy" >&5
+printf "%s\n" "TLS will use same port as legacy" >&6; }
+    ;;
+  no | *)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: TLS will use separate port" >&5
+printf "%s\n" "TLS will use separate port" >&6; }
+    ;;
+  esac
+else case e in #(
+  e) # ie: no --{enable,disable}-tls-same-port option, withval == ""
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: TLS will use separate port" >&5
+printf "%s\n" "TLS will use separate port" >&6; }
+ ;;
+esac
+fi
 
 
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for alt pid file FQPN" >&5

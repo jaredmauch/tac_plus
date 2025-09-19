@@ -30,6 +30,14 @@
 /* define this to enable debug-only secret logging */
 #undef DEBUG_SECRET_LOGGING
 
+/* define this to enable ASCII authentication (disabled by default for
+   security) */
+#undef ENABLE_ASCII
+
+/* define this to enable PAP authentication (disabled by default for security)
+   */
+#undef ENABLE_PAP
+
 /* define this to enable SENDPASS support (disabled by default for security)
    */
 #undef ENABLE_SENDPASS
@@ -184,6 +192,9 @@
 /* Define to 1 if you have the <termios.h> header file. */
 #undef HAVE_TERMIOS_H
 
+/* define this if TLS support is available */
+#undef HAVE_TLS
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
@@ -310,6 +321,21 @@
 
 /* define this to a UID for setuid() at run-time */
 #undef TACPLUS_USERID
+
+/* Path to TLS CA certificate */
+#undef TLS_CA_PATH
+
+/* Path to TLS server certificate */
+#undef TLS_CERT_PATH
+
+/* Path to TLS server private key */
+#undef TLS_KEY_PATH
+
+/* TLS port number */
+#undef TLS_PORT
+
+/* define this to use same port for TLS and legacy */
+#undef TLS_SAME_PORT
 
 /* define this to include user-specific enable password support */
 #undef UENABLE

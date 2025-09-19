@@ -571,6 +571,30 @@ int	sha512_verify(const char *password, const char *hash);
 char	*sha512_hash(const char *password, const char *salt, int rounds);
 #endif
 
+/* TLS transport security functions */
+#ifdef HAVE_TLS
+int	tls_init(void);
+int	tls_reload(void);
+void	tls_cleanup(void);
+int	tls_accept(int socket_fd);
+int	tls_connect(int socket_fd);
+int	tls_read(void *buf, int len);
+int	tls_write(const void *buf, int len);
+void	tls_close(void);
+int	tls_is_connected(void);
+#else
+/* Stub functions when TLS is not available */
+int	tls_init(void);
+int	tls_reload(void);
+void	tls_cleanup(void);
+int	tls_accept(int socket_fd);
+int	tls_connect(int socket_fd);
+int	tls_read(void *buf, int len);
+int	tls_write(const void *buf, int len);
+void	tls_close(void);
+int	tls_is_connected(void);
+#endif
+
 int aceclnt_fn(struct authen_data *data);
 int default_v0_fn(struct authen_data *data);
 int enable_fn(struct authen_data *data);

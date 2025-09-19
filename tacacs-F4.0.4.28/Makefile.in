@@ -166,8 +166,8 @@ am__tac_plus_SOURCES_DIST = acct.c authen.c author.c choose_authen.c \
 	client_count.c config.c default_fn.c default_v0_fn.c do_acct.c \
 	do_author.c dump.c enable.c encrypt.c expire.c hash.c \
 	maxsessint.c modern_crypto.c parse.c programs.c pw.c pwlib.c \
-	report.c sendauth.c sendpass.c tac_plus.c utils.c skey_fn.c \
-	aceclnt_fn.c
+	report.c sendauth.c sendpass.c tac_plus.c tls_support.c \
+	utils.c skey_fn.c aceclnt_fn.c
 @TACSKEY_TRUE@am__objects_1 = skey_fn.$(OBJEXT)
 @TACACECLNT_TRUE@am__objects_2 = aceclnt_fn.$(OBJEXT)
 am_tac_plus_OBJECTS = acct.$(OBJEXT) authen.$(OBJEXT) author.$(OBJEXT) \
@@ -178,8 +178,8 @@ am_tac_plus_OBJECTS = acct.$(OBJEXT) authen.$(OBJEXT) author.$(OBJEXT) \
 	hash.$(OBJEXT) maxsessint.$(OBJEXT) modern_crypto.$(OBJEXT) \
 	parse.$(OBJEXT) programs.$(OBJEXT) pw.$(OBJEXT) \
 	pwlib.$(OBJEXT) report.$(OBJEXT) sendauth.$(OBJEXT) \
-	sendpass.$(OBJEXT) tac_plus.$(OBJEXT) utils.$(OBJEXT) \
-	$(am__objects_1) $(am__objects_2)
+	sendpass.$(OBJEXT) tac_plus.$(OBJEXT) tls_support.$(OBJEXT) \
+	utils.$(OBJEXT) $(am__objects_1) $(am__objects_2)
 tac_plus_OBJECTS = $(am_tac_plus_OBJECTS)
 am__DEPENDENCIES_1 =
 tac_plus_DEPENDENCIES = $(am__DEPENDENCIES_1) libtacacs.la
@@ -227,7 +227,8 @@ am__depfiles_remade = ./$(DEPDIR)/acct.Po ./$(DEPDIR)/aceclnt_fn.Po \
 	./$(DEPDIR)/report.Po ./$(DEPDIR)/sendauth.Po \
 	./$(DEPDIR)/sendpass.Po ./$(DEPDIR)/skey_fn.Po \
 	./$(DEPDIR)/tac_plus.Po ./$(DEPDIR)/tac_pwd-modern_crypto.Po \
-	./$(DEPDIR)/tac_pwd-tac_pwd.Po ./$(DEPDIR)/utils.Po
+	./$(DEPDIR)/tac_pwd-tac_pwd.Po ./$(DEPDIR)/tls_support.Po \
+	./$(DEPDIR)/utils.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -345,6 +346,8 @@ ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
+ENABLE_ASCII = @ENABLE_ASCII@
+ENABLE_PAP = @ENABLE_PAP@
 ENABLE_SENDPASS = @ENABLE_SENDPASS@
 ETAGS = @ETAGS@
 EXEEXT = @EXEEXT@
@@ -416,6 +419,11 @@ TACPLUS_PIDFILE = @TACPLUS_PIDFILE@
 TACPLUS_USERID = @TACPLUS_USERID@
 TACPLUS_WHOLOGFILE = @TACPLUS_WHOLOGFILE@
 TAR = @TAR@
+TLS_CA_PATH = @TLS_CA_PATH@
+TLS_CERT_PATH = @TLS_CERT_PATH@
+TLS_KEY_PATH = @TLS_KEY_PATH@
+TLS_LIBS = @TLS_LIBS@
+TLS_PORT = @TLS_PORT@
 UENABLE = @UENABLE@
 VERSION = @VERSION@
 WARN = @WARN@
@@ -490,10 +498,10 @@ tac_plus_SOURCES = acct.c authen.c author.c choose_authen.c \
 	client_count.c config.c default_fn.c default_v0_fn.c do_acct.c \
 	do_author.c dump.c enable.c encrypt.c expire.c hash.c \
 	maxsessint.c modern_crypto.c parse.c programs.c pw.c pwlib.c \
-	report.c sendauth.c sendpass.c tac_plus.c utils.c \
-	$(am__append_1) $(am__append_2)
+	report.c sendauth.c sendpass.c tac_plus.c tls_support.c \
+	utils.c $(am__append_1) $(am__append_2)
 tac_plus_LDFLAGS = -L$(top_srcdir)
-tac_plus_LDADD = $(WRAPLIBS) libtacacs.la @LIBSODIUM_LIBS@ -lcrypt
+tac_plus_LDADD = $(WRAPLIBS) libtacacs.la @LIBSODIUM_LIBS@ @TLS_LIBS@ -lcrypt
 lib_LTLIBRARIES = libtacacs.la
 libtacacs_la_SOURCES = fdes.c maxsess.c md4.c md5.c packet.c
 libtacacs_la_CFLAGS = @CFLAGS@ $(WARN) $(DBG) @PROFLAGS@
@@ -819,6 +827,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tac_plus.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tac_pwd-modern_crypto.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tac_pwd-tac_pwd.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tls_support.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
@@ -1366,6 +1375,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/tac_plus.Po
 	-rm -f ./$(DEPDIR)/tac_pwd-modern_crypto.Po
 	-rm -f ./$(DEPDIR)/tac_pwd-tac_pwd.Po
+	-rm -f ./$(DEPDIR)/tls_support.Po
 	-rm -f ./$(DEPDIR)/utils.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
@@ -1450,6 +1460,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/tac_plus.Po
 	-rm -f ./$(DEPDIR)/tac_pwd-modern_crypto.Po
 	-rm -f ./$(DEPDIR)/tac_pwd-tac_pwd.Po
+	-rm -f ./$(DEPDIR)/tls_support.Po
 	-rm -f ./$(DEPDIR)/utils.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic

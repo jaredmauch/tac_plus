@@ -144,7 +144,15 @@ static long int maxprocsperclt = TAC_MAX_PROCS_PER_CLIENT; /* max per client */
 static long int readtimeout = TAC_PLUS_READ_TIMEOUT; /* read timeout */
 static long int writetimeout = TAC_PLUS_WRITE_TIMEOUT; /* write timeout */
 static long int accepttimeout = TAC_PLUS_ACCEPT_TIMEOUT; /* accept timeout */
-static int logauthor = 0; /* log authorization requests */
+static int logauthor = 0;
+
+/* TLS configuration variables */
+char *tls_cert_path = NULL;
+char *tls_key_path = NULL;
+char *tls_ca_path = NULL;
+
+/* External function declarations */
+extern void cfg_cleanup_pollfd(void);
 
 /*
  * A host definition structure.
@@ -599,6 +607,23 @@ cfg_clean_config(void)
 	}
 	usertable[i] = NULL;
     }
+
+    /* Clean up TLS configuration variables */
+    if (tls_cert_path) {
+	free(tls_cert_path);
+	tls_cert_path = NULL;
+    }
+    if (tls_key_path) {
+	free(tls_key_path);
+	tls_key_path = NULL;
+    }
+    if (tls_ca_path) {
+	free(tls_ca_path);
+	tls_ca_path = NULL;
+    }
+
+    /* Clean up pollfd array */
+    cfg_cleanup_pollfd();
 }
 
 static int
@@ -897,10 +922,59 @@ parse_decls()
         sym_get();
         continue;
 
-  case S_logauthor:
-      parse(S_logauthor);
-      logauthor = 1;
-      continue;
+	case S_logauthor:
+	    parse(S_logauthor);
+	    logauthor = 1;
+	    continue;
+
+	case S_tls:
+	    parse(S_tls);
+	    sym_get();
+	    continue;
+
+	case S_tls_cert:
+	    parse(S_tls_cert);
+	    parse(S_separator);
+	    if (tls_cert_path) {
+		free(tls_cert_path);
+	    }
+	    tls_cert_path = tac_strdup(sym_buf);
+	    sym_get();
+	    continue;
+
+	case S_tls_key:
+	    parse(S_tls_key);
+	    parse(S_separator);
+	    if (tls_key_path) {
+		free(tls_key_path);
+	    }
+	    tls_key_path = tac_strdup(sym_buf);
+	    sym_get();
+	    continue;
+
+	case S_tls_ca:
+	    parse(S_tls_ca);
+	    parse(S_separator);
+	    if (tls_ca_path) {
+		free(tls_ca_path);
+	    }
+	    tls_ca_path = tac_strdup(sym_buf);
+	    sym_get();
+	    continue;
+
+	case S_tls_port:
+	    parse(S_tls_port);
+	    parse(S_separator);
+	    errno = 0;
+	    int port_num = strtol(tac_strdup(sym_buf), NULL, 10);
+	    if ((errno) || (port_num < 1) || (port_num > 65535)) {
+		parse_error("tls-port must be a valid port number (1-65535)");
+		return 1;
+	    }
+	    tls_port = port_num;
+	    set_tls_port(port_num);
+	    sym_get();
+	    continue;
 
 	case S_host:
 	    parse_host();

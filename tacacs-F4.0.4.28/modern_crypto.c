@@ -43,7 +43,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <crypt.h>
+#ifdef HAVE_CRYPT_H
+# include <crypt.h>
+#endif
 
 /* ===== Modern Password Hashing Functions ===== */
 

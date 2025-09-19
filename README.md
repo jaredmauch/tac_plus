@@ -27,6 +27,15 @@ This is a fork of Cisco + Shruberry's Tacacas+ daemons (http://www.shrubbery.net
 
 This fork includes modern security enhancements while maintaining full backward compatibility:
 
+### TLS 1.3 Transport Security (RFC 8907 Compliance)
+- **TLS 1.3 Support**: Modern transport security with OpenSSL or mbedTLS
+- **Mutual Authentication**: Client and server certificate verification
+- **Strong Cipher Suites**: AES-256-GCM, ChaCha20-Poly1305, AES-128-GCM
+- **Security Hardening**: Disabled compression, session tickets, weak protocols
+- **Certificate Management**: Comprehensive guide for Let's Encrypt and OpenSSL
+
+See [TLS_CERTIFICATE_GUIDE.md](TLS_CERTIFICATE_GUIDE.md) for detailed certificate setup instructions.
+
 ### Modern Password Hashing
 - **Argon2**: Winner of the Password Hashing Competition (2015) - uses libsodium
 - **bcrypt**: Adaptive password hashing with configurable cost factor

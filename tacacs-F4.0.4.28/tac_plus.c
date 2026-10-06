@@ -178,6 +178,7 @@ static char msgbuf[MSGBUFSZ];
 
 static RETSIGTYPE die(int);
 static int get_socket(int **, int *, const char *);
+static void drop_connection(int, int);
 static int init(void);
 #if defined(REAPCHILD) && defined(REAPSIGIGN)
 static RETSIGTYPE reapchild(int);
@@ -340,6 +341,15 @@ get_socket(int **sa, int *nsa, const char *port_str)
 	s = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 	if (s == -1)
 	    continue;
+	/*
+	 * Close these on exec so helper programs do not inherit a listening
+	 * socket. fork() still duplicates them; the child closes them itself.
+	 */
+	if (fcntl(s, F_SETFD, FD_CLOEXEC) < 0) {
+	    report(LOG_ERR, "fcntl(FD_CLOEXEC) fd %d: %s", s, strerror(errno));
+	    close(s);
+	    continue;
+	}
 
 	if (1 || debug & DEBUG_PACKET_FLAG)
 	    report(LOG_DEBUG, "socket FD %d AF %d", s, rp->ai_family);
@@ -401,6 +411,22 @@ get_socket(int **sa, int *nsa, const char *port_str)
     }
 
     return(0);
+}
+
+/*
+ * Abandon a connection this process will not serve. TLS close must run
+ * while the descriptor is still open; otherwise the SSL object is leaked
+ * and a later accept() can reuse the same descriptor number.
+ */
+static void
+drop_connection(int fd, int is_tls)
+{
+    if (fd < 0)
+	return;
+    if (is_tls)
+	tls_close();
+    shutdown(fd, 2);
+    close(fd);
 }
 
 /*
@@ -572,7 +598,7 @@ main(int argc, char **argv)
 	/* running under inetd */
 	char host[NI_MAXHOST];
 	int on;
-	struct sockaddr_in name;
+	struct sockaddr_storage name;
 	socklen_t name_len;
 
 	name_len = sizeof(name);
@@ -865,6 +891,15 @@ main(int argc, char **argv)
 	
 	for (c = 0; c < total_sockets; c++) {
 	    if (pfds[c].revents & POLLIN) {
+		/*
+		 * from_len is a value-result argument. An earlier accept,
+		 * including a failed one, may have shortened it to the size
+		 * of an IPv4 address. An IPv6 peer does not fit in that, and
+		 * accept() can allocate a descriptor it then fails to return.
+		 * Those descriptors stay open in this process until accept()
+		 * itself fails with "Too many open files".
+		 */
+		from_len = sizeof(from);
 		if (c < ns) {
 		    /* Regular socket */
 		    newsockfd = accept(s[c], (struct sockaddr *)&from, &from_len);
@@ -873,6 +908,12 @@ main(int argc, char **argv)
 		    /* TLS socket */
 		    newsockfd = accept(tls_sockets[c - ns], (struct sockaddr *)&from, &from_len);
 		    is_tls_connection = 1;
+		}
+		if (newsockfd >= 0 && fcntl(newsockfd, F_SETFD, FD_CLOEXEC) < 0) {
+		    report(LOG_ERR, "fcntl(FD_CLOEXEC) fd %d: %s",
+			   newsockfd, strerror(errno));
+		    close(newsockfd);
+		    newsockfd = -1;
 		}
         /* New connection, break out of for loop to fork, avoids
            accepting 2 connections then forking, leaving one stranded */
@@ -920,15 +961,13 @@ main(int argc, char **argv)
 #ifdef HAVE_TLS
 	    if (tls_accept(newsockfd) != 0) {
 		report(LOG_ERR, "TLS handshake failed for %s", session.peer);
-		shutdown(newsockfd, 2);
-		close(newsockfd);
+		drop_connection(newsockfd, 1);
 		continue;
 	    }
 	    report(LOG_INFO, "TLS connection established with %s", session.peer);
 #else
 	    report(LOG_ERR, "TLS connection attempted but TLS not compiled in");
-	    shutdown(newsockfd, 2);
-	    close(newsockfd);
+	    drop_connection(newsockfd, 0);
 	    continue;
 #endif
 	}
@@ -939,8 +978,7 @@ main(int argc, char **argv)
       if (total_child_count >= cfg_get_maxprocs()) {
         report(LOG_ALERT, "refused connection from %s [%s] at global max procs [%d]",
           session.peer, session.peerip, total_child_count);
-        shutdown(newsockfd, 2);
-        close(newsockfd);
+        drop_connection(newsockfd, is_tls_connection);
         continue;
       }
       /* no we check the process count per client */
@@ -949,8 +987,7 @@ main(int argc, char **argv)
       if (procs_for_client >= cfg_get_maxprocsperclt()) {
         report(LOG_ALERT, "refused connection from %s [%s] at client max procs [%d]",
           session.peer, session.peerip, procs_for_client);
-        shutdown(newsockfd, 2);
-        close(newsockfd);
+        drop_connection(newsockfd, is_tls_connection);
         continue;
       }
 #endif
@@ -959,6 +996,7 @@ main(int argc, char **argv)
 
 	    if (pid < 0) {
         report(LOG_ERR, "fork error");
+        drop_connection(newsockfd, is_tls_connection);
         tac_exit(1);
 	    }
 	} else {
@@ -967,22 +1005,22 @@ main(int argc, char **argv)
 
 	if (pid == 0) {
 	    /* child */
-	    if (!single)
+	    if (!single) {
 		for (c = 0; c < ns; c++)
 		    close(s[c]);
+		for (c = 0; c < tls_nsockets; c++)
+		    close(tls_sockets[c]);
+	    }
 	    session.sock = newsockfd;
 #ifdef LIBWRAP
 	    if (! hosts_ctl(progname,session.peer,session.peerip,progname)) {
 		report(LOG_ALERT, "refused connection from %s [%s]",
 		       session.peer, session.peerip);
-		shutdown(session.sock, 2);
-		close(session.sock);
-		if (!single) {
+		drop_connection(session.sock, is_tls_connection);
+		session.sock = -1;
+		if (!single)
 		    tac_exit(0);
-		} else {
-		    close(session.sock);
-		    continue;
-		}
+		continue;
 	    }
 	    report(LOG_INFO, "connect from %s [%s]", session.peer,
 		   session.peerip);
@@ -1010,6 +1048,13 @@ main(int argc, char **argv)
             (long)pid, session.peerip, total_child_count, procs_for_client);
 		    report(LOG_DEBUG, msgbuf);
 #endif
+	    /*
+	     * The child inherited the TLS object. Free only this copy so
+	     * the next connection cannot overwrite it, and do not shut the
+	     * session down — the child still owns the socket.
+	     */
+	    if (is_tls_connection)
+		tls_detach();
 	    close(newsockfd);
 	}
     }

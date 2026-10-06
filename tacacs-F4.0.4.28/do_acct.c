@@ -82,6 +82,7 @@ do_acct_file(struct acct_rec *rec)
 	if (acctfd < 0) {
 	    report(LOG_ERR, "Can't open acct file %s -- %s",
 		   session.acctfile, strerror(errno));
+	    acctfd = 0;
 	    return(1);
 	}
     }
@@ -89,6 +90,8 @@ do_acct_file(struct acct_rec *rec)
 	rec->admin_msg = tac_strdup("Cannot lock log file");
 	report(LOG_ERR, "%s: Cannot lock %s",
 	       session.peer, session.acctfile);
+	close(acctfd);
+	acctfd = 0;
 	return(1);
     }
 
@@ -258,12 +261,14 @@ wtmp_entry(char *line, char *name, char *host, time_t utime)
 
     if (!tac_lockfd(wtmpfile, wtmpfd)) {
 	report(LOG_ERR, "%s: Cannot lock %s", session.peer, wtmpfile);
+	close(wtmpfd);
 	return(1);
     }
 
     if (write(wtmpfd, &entry, sizeof entry) != (sizeof entry)) {
 	report(LOG_ERR, "%s: couldn't write wtmp file %s %s",
 	       session.peer, wtmpfile, strerror(errno));
+	close(wtmpfd);
 	return(1);
     }
 

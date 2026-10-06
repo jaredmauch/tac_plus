@@ -581,6 +581,7 @@ int	tls_connect(int socket_fd);
 int	tls_read(void *buf, int len);
 int	tls_write(const void *buf, int len);
 void	tls_close(void);
+void	tls_detach(void);
 int	tls_is_connected(void);
 #else
 /* Stub functions when TLS is not available */
@@ -592,6 +593,7 @@ int	tls_connect(int socket_fd);
 int	tls_read(void *buf, int len);
 int	tls_write(const void *buf, int len);
 void	tls_close(void);
+void	tls_detach(void);
 int	tls_is_connected(void);
 #endif
 

@@ -379,7 +379,7 @@ ckfinger(char *user, char *nas, struct identity *idp)
 	    freeaddrinfo(res);
 	    return(0);
 	}
-	if ((ecode = connect(s, resp->ai_addr, res->ai_addrlen)) < 0) {
+	if ((ecode = connect(s, resp->ai_addr, resp->ai_addrlen)) < 0) {
 	    close(s);
 	    continue;
 	} else

@@ -207,8 +207,10 @@ tls_accept(int socket_fd)
 #endif
 
 #ifdef HAVE_MBEDTLS
-    mbedtls_ssl_set_bio(&tls_ctx->ssl, &socket_fd, mbedtls_net_send, mbedtls_net_recv, NULL);
-    
+    /* socket_fd lives in tls_ctx; the function argument would dangle after return */
+    mbedtls_ssl_set_bio(&tls_ctx->ssl, &tls_ctx->socket_fd,
+			mbedtls_net_send, mbedtls_net_recv, NULL);
+
     if (mbedtls_ssl_handshake(&tls_ctx->ssl) != 0) {
         report(LOG_ERR, "tls_accept: mbedTLS handshake failed");
         return -1;
@@ -256,8 +258,9 @@ tls_connect(int socket_fd)
 #endif
 
 #ifdef HAVE_MBEDTLS
-    mbedtls_ssl_set_bio(&tls_ctx->ssl, &socket_fd, mbedtls_net_send, mbedtls_net_recv, NULL);
-    
+    mbedtls_ssl_set_bio(&tls_ctx->ssl, &tls_ctx->socket_fd,
+			mbedtls_net_send, mbedtls_net_recv, NULL);
+
     if (mbedtls_ssl_handshake(&tls_ctx->ssl) != 0) {
         report(LOG_ERR, "tls_connect: mbedTLS handshake failed");
         return -1;
@@ -333,6 +336,29 @@ tls_close(void)
 #endif
 
     tls_ctx->is_connected = 0;
+}
+
+/*
+ * Drop this process's TLS state without touching the socket.
+ * The listener calls this after fork(). The child keeps its own copy of
+ * the TLS state and the accepted descriptor; shutting down here would
+ * close the session the child is about to serve.
+ */
+void
+tls_detach(void)
+{
+    if (tls_ctx == NULL)
+        return;
+
+#ifdef HAVE_OPENSSL
+    if (tls_ctx->ssl) {
+        SSL_free(tls_ctx->ssl);
+        tls_ctx->ssl = NULL;
+    }
+#endif
+
+    tls_ctx->is_connected = 0;
+    tls_ctx->socket_fd = -1;
 }
 
 /*
@@ -676,6 +702,7 @@ int tls_connect(int socket_fd) { return -1; }
 int tls_read(void *buf, int len) { return -1; }
 int tls_write(const void *buf, int len) { return -1; }
 void tls_close(void) { }
+void tls_detach(void) { }
 int tls_is_connected(void) { return 0; }
 
 #endif /* HAVE_TLS */
